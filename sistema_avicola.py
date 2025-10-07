@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import io
 import hashlib
 import hmac
@@ -236,7 +236,338 @@ def gestion_usuarios():
                     st.warning("⚠️ Complete todos los campos")
 
 # =============================================
-# FUNCIONES PRINCIPALES CON PERMISOS
+# MÓDULO MEJORADO DE PLANIFICACIÓN
+# =============================================
+
+def planificacion_semanal():
+    """Planificación semanal mejorada"""
+    if not tiene_permiso(['admin', 'supervisor']):
+        st.error("⛔ No tienes permisos para acceder a esta sección")
+        return
+    
+    st.header("📅 Planificación de Desplazamiento Laboral")
+    
+    # Tabs para diferentes funcionalidades
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "➕ Nueva Planificación", 
+        "📋 Planificación Existente", 
+        "📊 Programación Semanal",
+        "📦 Cargas/Pasajeros"
+    ])
+    
+    with tab1:
+        st.subheader("➕ Nueva Planificación de Desplazamiento")
+        
+        with st.form("nueva_planificacion_completa", clear_on_submit=True):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**📋 Información Básica**")
+                lote = st.text_input("Número de Lote", placeholder="Ej: L2024-001")
+                producto = st.selectbox("Producto", ["POLITA", "POLITO", "SASSO", "AZUR", "CHICKENMIX", "OTRO"])
+                if producto == "OTRO":
+                    producto = st.text_input("Especificar producto")
+                
+                cliente = st.selectbox("Cliente", [c['nombre'] for c in st.session_state.clientes])
+                cantidad = st.number_input("Cantidad de Pollos", min_value=1, value=1000, step=100)
+                peso_estimado = st.number_input("Peso Estimado (kg)", min_value=1.0, value=50.0, step=0.5)
+            
+            with col2:
+                st.markdown("**📅 Fechas y Horarios**")
+                fecha_nacimiento = st.date_input("Fecha de Nacimiento", min_value=datetime.now().date())
+                fecha_despacho = st.date_input("Fecha de Despacho", min_value=datetime.now().date())
+                
+                st.markdown("**🚚 Información de Transporte**")
+                conductor = st.selectbox("Conductor Asignado", [c['nombre'] for c in st.session_state.conductores])
+                vehiculo = st.selectbox("Vehículo", [f"{v['placa']} - {v['marca']} {v['modelo']}" for v in st.session_state.vehiculos])
+                prioridad = st.selectbox("Prioridad", ["ALTA", "MEDIA", "BAJA"])
+                
+                # Información adicional
+                observaciones = st.text_area("Observaciones / Notas Especiales")
+            
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.form_submit_button("💾 Guardar Planificación", type="primary"):
+                    if lote and cliente:
+                        # Verificar si el lote ya existe
+                        lote_existente = any(p.get('lote') == lote for p in st.session_state.planificacion)
+                        if lote_existente:
+                            st.error("❌ El número de lote ya existe")
+                        else:
+                            nueva_planificacion = {
+                                'id': f"PL{len(st.session_state.planificacion)+1:04d}",
+                                'lote': lote,
+                                'producto': producto,
+                                'cliente': cliente,
+                                'cantidad': cantidad,
+                                'peso_estimado': peso_estimado,
+                                'fecha_nacimiento': fecha_nacimiento.strftime("%Y-%m-%d"),
+                                'fecha_despacho': fecha_despacho.strftime("%Y-%m-%d"),
+                                'conductor': conductor,
+                                'vehiculo': vehiculo,
+                                'prioridad': prioridad,
+                                'observaciones': observaciones,
+                                'estado': 'PLANIFICADO',
+                                'fecha_creacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                'creado_por': st.session_state.usuario_actual
+                            }
+                            st.session_state.planificacion.append(nueva_planificacion)
+                            st.success("✅ Planificación guardada exitosamente!")
+                            st.rerun()
+                    else:
+                        st.warning("⚠️ Complete los campos obligatorios (Lote y Cliente)")
+            
+            with col_btn2:
+                if st.form_submit_button("🔄 Limpiar Formulario"):
+                    st.rerun()
+    
+    with tab2:
+        st.subheader("📋 Planificación Existente")
+        
+        if not st.session_state.planificacion:
+            st.info("No hay planificaciones registradas")
+        else:
+            # Filtros
+            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+            with col_filtro1:
+                filtro_estado = st.selectbox("Filtrar por Estado", ["TODOS", "PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO", "CANCELADO"])
+            with col_filtro2:
+                filtro_prioridad = st.selectbox("Filtrar por Prioridad", ["TODAS", "ALTA", "MEDIA", "BAJA"])
+            with col_filtro3:
+                filtro_cliente = st.selectbox("Filtrar por Cliente", ["TODOS"] + list(set(p['cliente'] for p in st.session_state.planificacion)))
+            
+            # Aplicar filtros
+            planificaciones_filtradas = st.session_state.planificacion.copy()
+            
+            if filtro_estado != "TODOS":
+                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['estado'] == filtro_estado]
+            
+            if filtro_prioridad != "TODAS":
+                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['prioridad'] == filtro_prioridad]
+            
+            if filtro_cliente != "TODOS":
+                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['cliente'] == filtro_cliente]
+            
+            # Mostrar en tabla
+            datos_tabla = []
+            for plan in planificaciones_filtradas:
+                # Determinar color del estado
+                color_estado = {
+                    'PLANIFICADO': '🟡',
+                    'PROGRAMADO': '🔵', 
+                    'EN CURSO': '🟠',
+                    'COMPLETADO': '🟢',
+                    'CANCELADO': '🔴'
+                }.get(plan['estado'], '⚪')
+                
+                datos_tabla.append({
+                    'ID': plan['id'],
+                    'Lote': plan['lote'],
+                    'Cliente': plan['cliente'],
+                    'Producto': plan['producto'],
+                    'Cantidad': f"{plan['cantidad']:,}",
+                    'Fecha Despacho': plan['fecha_despacho'],
+                    'Conductor': plan['conductor'],
+                    'Prioridad': plan['prioridad'],
+                    'Estado': f"{color_estado} {plan['estado']}"
+                })
+            
+            df_planificacion = pd.DataFrame(datos_tabla)
+            st.dataframe(df_planificacion, use_container_width=True)
+            
+            # Estadísticas
+            st.subheader("📊 Estadísticas de Planificación")
+            col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+            
+            with col_stat1:
+                total = len(planificaciones_filtradas)
+                st.metric("Total Planificaciones", total)
+            
+            with col_stat2:
+                completados = len([p for p in planificaciones_filtradas if p['estado'] == 'COMPLETADO'])
+                st.metric("Completados", completados)
+            
+            with col_stat3:
+                pendientes = len([p for p in planificaciones_filtradas if p['estado'] in ['PLANIFICADO', 'PROGRAMADO']])
+                st.metric("Pendientes", pendientes)
+            
+            with col_stat4:
+                cantidad_total = sum([p['cantidad'] for p in planificaciones_filtradas])
+                st.metric("Total Pollos", f"{cantidad_total:,}")
+            
+            # Opciones de gestión
+            st.markdown("---")
+            st.subheader("🛠️ Gestión de Planificaciones")
+            
+            if planificaciones_filtradas:
+                col_gest1, col_gest2, col_gest3 = st.columns(3)
+                
+                with col_gest1:
+                    planificacion_editar = st.selectbox(
+                        "Seleccionar planificación para editar:",
+                        [f"{p['id']} - {p['lote']} - {p['cliente']}" for p in planificaciones_filtradas],
+                        key="editar_planificacion"
+                    )
+                    
+                    if st.button("✏️ Editar Planificación Seleccionada"):
+                        st.session_state.editando_planificacion = planificacion_editar.split(" - ")[0]
+                        st.info("🔧 Funcionalidad de edición en desarrollo")
+                
+                with col_gest2:
+                    nuevo_estado = st.selectbox(
+                        "Cambiar estado:",
+                        ["PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO", "CANCELADO"],
+                        key="cambiar_estado"
+                    )
+                    
+                    if st.button("🔄 Actualizar Estado"):
+                        id_cambiar = planificacion_editar.split(" - ")[0]
+                        for plan in st.session_state.planificacion:
+                            if plan['id'] == id_cambiar:
+                                plan['estado'] = nuevo_estado
+                                st.success(f"✅ Estado actualizado a {nuevo_estado}")
+                                st.rerun()
+                                break
+                
+                with col_gest3:
+                    if st.button("🗑️ Eliminar Planificación", type="secondary"):
+                        id_eliminar = planificacion_editar.split(" - ")[0]
+                        st.session_state.planificacion = [p for p in st.session_state.planificacion if p['id'] != id_eliminar]
+                        st.success("✅ Planificación eliminada!")
+                        st.rerun()
+    
+    with tab3:
+        st.subheader("📊 Programación Semanal")
+        
+        # Selector de semana
+        fecha_inicio = st.date_input("Seleccionar semana empezando:", datetime.now().date())
+        
+        # Generar días de la semana
+        dias_semana = []
+        for i in range(7):
+            fecha = fecha_inicio + timedelta(days=i)
+            dias_semana.append(fecha)
+        
+        # Mostrar programación semanal
+        st.markdown("### 🗓️ Programación de la Semana")
+        
+        # Crear DataFrame para la semana
+        datos_semana = []
+        for fecha in dias_semana:
+            planificaciones_dia = [
+                p for p in st.session_state.planificacion 
+                if p['fecha_despacho'] == fecha.strftime("%Y-%m-%d")
+            ]
+            
+            for plan in planificaciones_dia:
+                datos_semana.append({
+                    'Fecha': fecha.strftime("%d/%m/%Y"),
+                    'Día': fecha.strftime("%A"),
+                    'Lote': plan['lote'],
+                    'Cliente': plan['cliente'],
+                    'Producto': plan['producto'],
+                    'Cantidad': plan['cantidad'],
+                    'Conductor': plan['conductor'],
+                    'Prioridad': plan['prioridad'],
+                    'Estado': plan['estado']
+                })
+        
+        if datos_semana:
+            df_semana = pd.DataFrame(datos_semana)
+            st.dataframe(df_semana, use_container_width=True)
+            
+            # Resumen por día
+            st.markdown("### 📈 Resumen por Día")
+            resumen_dias = df_semana.groupby(['Fecha', 'Día']).agg({
+                'Lote': 'count',
+                'Cantidad': 'sum'
+            }).reset_index()
+            resumen_dias.columns = ['Fecha', 'Día', 'N° Despachos', 'Total Pollos']
+            
+            col_res1, col_res2 = st.columns(2)
+            with col_res1:
+                st.dataframe(resumen_dias, use_container_width=True)
+            
+            with col_res2:
+                # Gráfico simple de barras
+                if not resumen_dias.empty:
+                    st.bar_chart(resumen_dias.set_index('Día')['N° Despachos'])
+        else:
+            st.info("No hay planificaciones para esta semana")
+    
+    with tab4:
+        st.subheader("📦 Gestión de Cargas y Pasajeros")
+        
+        st.markdown("### 🚚 Distribución de Cargas")
+        
+        if st.session_state.planificacion:
+            # Resumen por vehículo
+            carga_vehiculos = {}
+            for plan in st.session_state.planificacion:
+                if plan['estado'] in ['PLANIFICADO', 'PROGRAMADO']:
+                    vehiculo = plan['vehiculo']
+                    if vehiculo not in carga_vehiculos:
+                        carga_vehiculos[vehiculo] = 0
+                    carga_vehiculos[vehiculo] += plan['cantidad']
+            
+            if carga_vehiculos:
+                st.markdown("#### Carga por Vehículo")
+                for vehiculo, carga in carga_vehiculos.items():
+                    capacidad_vehiculo = 5000  # Valor por defecto, podrías obtenerlo de los datos reales
+                    porcentaje = min((carga / capacidad_vehiculo) * 100, 100)
+                    
+                    st.write(f"**{vehiculo}**")
+                    st.progress(porcentaje/100)
+                    st.write(f"{carga:,} pollos ({porcentaje:.1f}% de capacidad)")
+                    st.markdown("---")
+            else:
+                st.info("No hay cargas programadas")
+        
+        st.markdown("### 👥 Asignación de Conductores")
+        
+        if st.session_state.conductores and st.session_state.planificacion:
+            # Resumen por conductor
+            asignacion_conductores = {}
+            for plan in st.session_state.planificacion:
+                if plan['estado'] in ['PLANIFICADO', 'PROGRAMADO']:
+                    conductor = plan['conductor']
+                    if conductor not in asignacion_conductores:
+                        asignacion_conductores[conductor] = []
+                    asignacion_conductores[conductor].append(plan)
+            
+            for conductor, planes in asignacion_conductores.items():
+                with st.expander(f"🧑‍✈️ {conductor} - {len(planes)} viajes asignados"):
+                    for plan in planes:
+                        st.write(f"**Lote {plan['lote']}** - {plan['cliente']} - {plan['cantidad']} pollos - {plan['prioridad']}")
+        
+        # Información de procedimientos
+        st.markdown("---")
+        st.markdown("### 📋 Procedimientos de Seguridad")
+        
+        col_proc1, col_proc2 = st.columns(2)
+        
+        with col_proc1:
+            st.markdown("#### ✅ Checklist Pre-Viaje")
+            verif_vehiculo = st.checkbox("Verificación estado del vehículo")
+            verif_documentos = st.checkbox("Verificación de documentos")
+            verif_carga = st.checkbox("Verificación de carga segura")
+            verif_ruta = st.checkbox("Planificación de ruta verificada")
+            
+            if st.button("📝 Registrar Verificación"):
+                if verif_vehiculo and verif_documentos and verif_carga and verif_ruta:
+                    st.success("✅ Verificación completada satisfactoriamente")
+                else:
+                    st.warning("⚠️ Complete todas las verificaciones")
+        
+        with col_proc2:
+            st.markdown("#### 🚨 Protocolos de Emergencia")
+            st.write("- Contacto emergencias: 24/7")
+            st.write("- Seguro vehicular: ACTIVO")
+            st.write("- Kit primeros auxilios: REQUERIDO")
+            st.write("- Comunicación satelital: DISPONIBLE")
+
+# =============================================
+# FUNCIONES PRINCIPALES (MANTENIENDO LAS EXISTENTES)
 # =============================================
 
 def mostrar_dashboard():
@@ -251,7 +582,7 @@ def mostrar_dashboard():
     with col3:
         st.metric("Vehículos", len([v for v in st.session_state.vehiculos if v.get('activo', True)]))
     with col4:
-        pendientes = len([p for p in st.session_state.planificacion if p.get('estado') == 'PENDIENTE'])
+        pendientes = len([p for p in st.session_state.planificacion if p.get('estado') in ['PLANIFICADO', 'PROGRAMADO']])
         st.metric("Planificaciones Pendientes", pendientes)
     
     # Información adicional solo para admin/supervisor
@@ -446,46 +777,6 @@ def gestion_conductores_vehiculos():
         else:
             st.info("No hay conductores registrados")
 
-def planificacion_semanal():
-    """Planificación semanal"""
-    if not tiene_permiso(['admin', 'supervisor']):
-        st.error("⛔ No tienes permisos para acceder a esta sección")
-        return
-    
-    st.header("📅 Planificación Semanal")
-    
-    with st.form("nueva_planificacion"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            lote = st.text_input("Número de Lote")
-            producto = st.selectbox("Producto", ["POLITA", "POLITO", "SASSO", "AZUR", "CHICKENMIX"])
-            cliente = st.selectbox("Cliente", [c['nombre'] for c in st.session_state.clientes])
-        
-        with col2:
-            cantidad = st.number_input("Cantidad", min_value=1, value=100)
-            fecha = st.date_input("Fecha de Nacimiento")
-            prioridad = st.selectbox("Prioridad", ["ALTA", "MEDIA", "BAJA"])
-        
-        if st.form_submit_button("💾 Guardar Planificación"):
-            nueva = {
-                'lote': lote,
-                'producto': producto,
-                'cliente': cliente,
-                'cantidad': cantidad,
-                'fecha': fecha.strftime("%Y-%m-%d"),
-                'prioridad': prioridad,
-                'estado': 'PENDIENTE'
-            }
-            st.session_state.planificacion.append(nueva)
-            st.success("✅ Planificación guardada!")
-    
-    # Mostrar planificación existente
-    if st.session_state.planificacion:
-        st.subheader("Planificación Registrada")
-        df = pd.DataFrame(st.session_state.planificacion)
-        st.dataframe(df)
-
 def generar_despacho():
     """Generar despacho diario"""
     if not tiene_permiso(['admin', 'supervisor']):
@@ -500,7 +791,7 @@ def generar_despacho():
         # Filtrar planificaciones para esta fecha
         planificaciones_hoy = [
             p for p in st.session_state.planificacion 
-            if p['fecha'] == fecha.strftime("%Y-%m-%d") and p['estado'] == 'PENDIENTE'
+            if p['fecha_despacho'] == fecha.strftime("%Y-%m-%d") and p['estado'] in ['PLANIFICADO', 'PROGRAMADO']
         ]
         
         if not planificaciones_hoy:
