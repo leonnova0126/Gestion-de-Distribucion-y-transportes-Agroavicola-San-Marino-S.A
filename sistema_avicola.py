@@ -63,11 +63,12 @@ if 'clientes' not in st.session_state:
          'zona': 'CENTRO', 'ruta': 'GIRON', 'plan_vacunal': 'BASIC'},
     ]
 
+# CONDUCTORES SIMPLIFICADOS - SOLO NOMBRE E IDENTIFICACIÓN
 if 'conductores' not in st.session_state:
     st.session_state.conductores = [
-        {'codigo': 'D001', 'nombre': 'HERRERA OSORIO PEDRO ANGEL', 'placa': 'WOM366', 'ruta': 'CUCUTA', 'activo': True},
-        {'codigo': 'D002', 'nombre': 'ALMANZA KENNYG ROLLER', 'placa': 'WFD670', 'ruta': 'ANTIOQUIA', 'activo': True},
-        {'codigo': 'D003', 'nombre': 'SÁNCHEZ BARRERA WILMER ALEXANDER', 'placa': 'GQU440', 'ruta': 'GIRON', 'activo': True},
+        {'codigo': 'D001', 'nombre': 'HERRERA OSORIO PEDRO ANGEL', 'identificacion': '123456789'},
+        {'codigo': 'D002', 'nombre': 'ALMANZA KENNYG ROLLER', 'identificacion': '987654321'},
+        {'codigo': 'D003', 'nombre': 'SÁNCHEZ BARRERA WILMER ALEXANDER', 'identificacion': '456789123'},
     ]
 
 if 'vehiculos' not in st.session_state:
@@ -246,7 +247,7 @@ def mostrar_dashboard():
     with col1:
         st.metric("Clientes", len(st.session_state.clientes))
     with col2:
-        st.metric("Conductores", len([c for c in st.session_state.conductores if c.get('activo', True)]))
+        st.metric("Conductores", len(st.session_state.conductores))
     with col3:
         st.metric("Vehículos", len([v for v in st.session_state.vehiculos if v.get('activo', True)]))
     with col4:
@@ -327,106 +328,123 @@ def gestion_clientes():
             st.info("No hay clientes registrados")
 
 def gestion_conductores_vehiculos():
-    """Gestión de conductores y vehículos"""
+    """Gestión de conductores SIMPLIFICADA - solo nombre e identificación"""
     if not tiene_permiso(['admin', 'supervisor']):
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("🚚 Gestión de Conductores y Vehículos")
+    st.header("👤 Gestión de Conductores")
     
-    tab1, tab2 = st.tabs(["👤 Conductores", "🚛 Vehículos"])
+    col1, col2 = st.columns([1, 2])
     
-    with tab1:
-        col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("➕ Agregar Conductor")
+        with st.form("nuevo_conductor"):
+            codigo = st.text_input("Código Conductor", value=f"D{len(st.session_state.conductores)+1:03d}")
+            nombre = st.text_input("Nombre Completo")
+            identificacion = st.text_input("Número de Identificación")
+            
+            if st.form_submit_button("💾 Guardar Conductor"):
+                if codigo and nombre and identificacion:
+                    # Verificar si el código ya existe
+                    if any(c['codigo'] == codigo for c in st.session_state.conductores):
+                        st.error("❌ El código de conductor ya existe")
+                    else:
+                        nuevo_conductor = {
+                            'codigo': codigo,
+                            'nombre': nombre,
+                            'identificacion': identificacion
+                        }
+                        st.session_state.conductores.append(nuevo_conductor)
+                        st.success("✅ Conductor guardado exitosamente!")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ Complete todos los campos")
         
-        with col1:
-            st.subheader("➕ Agregar Conductor")
-            with st.form("nuevo_conductor"):
-                codigo = st.text_input("Código Conductor", value=f"D{len(st.session_state.conductores)+1:03d}")
-                nombre = st.text_input("Nombre Completo")
-                placa = st.text_input("Placa del Vehículo").upper()
-                ruta = st.text_input("Ruta Asignada")
-                activo = st.checkbox("Activo", value=True)
+        st.markdown("---")
+        st.subheader("📤 Importar desde CSV")
+        
+        archivo_csv = st.file_uploader("Subir archivo CSV con conductores", type=['csv'])
+        
+        if archivo_csv is not None:
+            try:
+                df = pd.read_csv(archivo_csv)
+                st.write("Vista previa del archivo:")
+                st.dataframe(df.head())
                 
-                if st.form_submit_button("💾 Guardar Conductor"):
-                    nuevo_conductor = {
-                        'codigo': codigo,
-                        'nombre': nombre,
-                        'placa': placa,
-                        'ruta': ruta,
-                        'activo': activo
-                    }
-                    st.session_state.conductores.append(nuevo_conductor)
-                    st.success("✅ Conductor guardado exitosamente!")
-                    st.rerun()
+                # Verificar columnas requeridas
+                columnas_requeridas = ['codigo', 'nombre', 'identificacion']
+                if all(col in df.columns for col in columnas_requeridas):
+                    if st.button("📥 Importar Conductores"):
+                        nuevos = 0
+                        for _, fila in df.iterrows():
+                            if not any(c['codigo'] == fila['codigo'] for c in st.session_state.conductores):
+                                st.session_state.conductores.append({
+                                    'codigo': fila['codigo'],
+                                    'nombre': fila['nombre'],
+                                    'identificacion': fila['identificacion']
+                                })
+                                nuevos += 1
+                        st.success(f"✅ Importados {nuevos} nuevos conductores!")
+                        st.rerun()
+                else:
+                    st.error("❌ El archivo debe contener las columnas: codigo, nombre, identificacion")
+            except Exception as e:
+                st.error(f"❌ Error al leer el archivo: {e}")
+    
+    with col2:
+        st.subheader("📋 Lista de Conductores")
         
-        with col2:
-            st.subheader("📋 Lista de Conductores")
+        if st.session_state.conductores:
+            # Crear DataFrame para mostrar
+            datos_tabla = []
+            for conductor in st.session_state.conductores:
+                datos_tabla.append({
+                    'Código': conductor['codigo'],
+                    'Nombre': conductor['nombre'],
+                    'Identificación': conductor['identificacion']
+                })
+            
+            df_conductores = pd.DataFrame(datos_tabla)
+            st.dataframe(df_conductores, use_container_width=True)
+            
+            # Botón para exportar a CSV
+            csv = df_conductores.to_csv(index=False)
+            
+            st.download_button(
+                label="📥 Descargar Lista de Conductores (CSV)",
+                data=csv,
+                file_name=f"conductores_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+            
+            # Opción para eliminar conductor
+            st.markdown("---")
+            st.subheader("🗑️ Eliminar Conductor")
+            
             if st.session_state.conductores:
-                df_conductores = pd.DataFrame(st.session_state.conductores)
-                st.dataframe(df_conductores, use_container_width=True)
+                conductor_a_eliminar = st.selectbox(
+                    "Seleccionar conductor a eliminar:",
+                    [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.conductores],
+                    key="eliminar_conductor"
+                )
                 
-                # Opción para eliminar conductor (solo admin)
-                if st.session_state.conductores and tiene_permiso(['admin']):
-                    conductor_a_eliminar = st.selectbox(
-                        "Seleccionar conductor a eliminar:",
-                        [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.conductores],
-                        key="eliminar_conductor"
-                    )
-                    
-                    if st.button("🗑️ Eliminar Conductor Seleccionado", key="btn_eliminar_conductor"):
+                col_btn1, col_btn2 = st.columns(2)
+                
+                with col_btn1:
+                    if st.button("🗑️ Eliminar Conductor Seleccionado", type="primary"):
                         codigo_eliminar = conductor_a_eliminar.split(" - ")[0]
                         st.session_state.conductores = [c for c in st.session_state.conductores if c['codigo'] != codigo_eliminar]
                         st.success("✅ Conductor eliminado!")
                         st.rerun()
-            else:
-                st.info("No hay conductores registrados")
-    
-    with tab2:
-        col1, col2 = st.columns([1, 2])
-        
-        with col1:
-            st.subheader("➕ Agregar Vehículo")
-            with st.form("nuevo_vehiculo"):
-                placa = st.text_input("Placa").upper()
-                marca = st.text_input("Marca")
-                modelo = st.text_input("Modelo")
-                capacidad = st.number_input("Capacidad (unidades)", min_value=1, value=1000)
-                activo = st.checkbox("Vehículo Activo", value=True)
                 
-                if st.form_submit_button("💾 Guardar Vehículo"):
-                    nuevo_vehiculo = {
-                        'placa': placa,
-                        'marca': marca,
-                        'modelo': modelo,
-                        'capacidad': capacidad,
-                        'activo': activo
-                    }
-                    st.session_state.vehiculos.append(nuevo_vehiculo)
-                    st.success("✅ Vehículo guardado exitosamente!")
-                    st.rerun()
-        
-        with col2:
-            st.subheader("📋 Lista de Vehículos")
-            if st.session_state.vehiculos:
-                df_vehiculos = pd.DataFrame(st.session_state.vehiculos)
-                st.dataframe(df_vehiculos, use_container_width=True)
-                
-                # Opción para eliminar vehículo (solo admin)
-                if st.session_state.vehiculos and tiene_permiso(['admin']):
-                    vehiculo_a_eliminar = st.selectbox(
-                        "Seleccionar vehículo a eliminar:",
-                        [f"{v['placa']} - {v.get('marca', 'SIN MARCA')} {v.get('modelo', 'SIN MODELO')}" for v in st.session_state.vehiculos],
-                        key="eliminar_vehiculo"
-                    )
-                    
-                    if st.button("🗑️ Eliminar Vehículo Seleccionado", key="btn_eliminar_vehiculo"):
-                        placa_eliminar = vehiculo_a_eliminar.split(" - ")[0]
-                        st.session_state.vehiculos = [v for v in st.session_state.vehiculos if v['placa'] != placa_eliminar]
-                        st.success("✅ Vehículo eliminado!")
+                with col_btn2:
+                    if st.button("🗑️ Eliminar TODOS los conductores"):
+                        st.session_state.conductores = []
+                        st.success("✅ Todos los conductores eliminados!")
                         st.rerun()
-            else:
-                st.info("No hay vehículos registrados")
+        else:
+            st.info("No hay conductores registrados")
 
 def planificacion_semanal():
     """Planificación semanal"""
@@ -489,24 +507,23 @@ def generar_despacho():
             st.warning("No hay planificaciones para hoy")
             return
         
-        # Asignar conductor automáticamente
+        # Asignar conductor automáticamente (si hay conductores)
         despachos_generados = []
         for i, plan in enumerate(planificaciones_hoy):
-            # Buscar cliente para saber la ruta
-            cliente = next((c for c in st.session_state.clientes if c['nombre'] == plan['cliente']), None)
-            if cliente:
-                conductor = next((d for d in st.session_state.conductores if d['ruta'] == cliente['ruta'] and d.get('activo', True)), None)
-                if conductor:
-                    despacho = {
-                        **plan,
-                        'nrovia': f"{i+1:04d}",
-                        'conductor': conductor['nombre'],
-                        'placa': conductor['placa'],
-                        'ruta': cliente['ruta'],
-                        'estado_despacho': 'ASIGNADO'
-                    }
-                    despachos_generados.append(despacho)
-                    plan['estado'] = 'PROGRAMADO'
+            # Asignar conductor rotativamente si hay conductores disponibles
+            if st.session_state.conductores:
+                conductor_idx = i % len(st.session_state.conductores)
+                conductor = st.session_state.conductores[conductor_idx]
+                
+                despacho = {
+                    **plan,
+                    'nrovia': f"{i+1:04d}",
+                    'conductor': conductor['nombre'],
+                    'identificacion_conductor': conductor['identificacion'],
+                    'estado_despacho': 'ASIGNADO'
+                }
+                despachos_generados.append(despacho)
+                plan['estado'] = 'PROGRAMADO'
         
         st.session_state.despachos = despachos_generados
         st.success(f"✅ Generados {len(despachos_generados)} despachos")
@@ -527,8 +544,13 @@ def planillas_distribucion():
     df = pd.DataFrame(st.session_state.despachos)
     
     # Seleccionar columnas para mostrar
-    columnas = ['nrovia', 'conductor', 'placa', 'ruta', 'cliente', 'producto', 'cantidad', 'prioridad']
-    st.dataframe(df[columnas])
+    columnas = ['nrovia', 'conductor', 'identificacion_conductor', 'cliente', 'producto', 'cantidad', 'prioridad']
+    columnas_disponibles = [col for col in columnas if col in df.columns]
+    
+    if columnas_disponibles:
+        st.dataframe(df[columnas_disponibles])
+    else:
+        st.dataframe(df)
     
     # Generar planillas individuales detalladas
     st.subheader("📄 Planillas Detalladas por Despacho")
@@ -540,69 +562,15 @@ def planillas_distribucion():
             
             with col1:
                 st.write(f"**Nro. Planilla:** {despacho['nrovia']}")
-                st.write(f"**Ruta:** {despacho['ruta']}")
                 st.write(f"**Fecha:** {datetime.now().strftime('%d/%m/%Y')}")
-                st.write(f"**Conductor:** {despacho['conductor']}")
+                st.write(f"**Conductor:** {despacho.get('conductor', 'N/A')}")
+                st.write(f"**Identificación:** {despacho.get('identificacion_conductor', 'N/A')}")
             
             with col2:
-                st.write(f"**Placa:** {despacho['placa']}")
                 st.write(f"**Cliente:** {despacho['cliente']}")
                 st.write(f"**Producto:** {despacho['producto']}")
                 st.write(f"**Cantidad:** {despacho['cantidad']:,}")
-            
-            # Botones de descarga
-            col_d1, col_d2 = st.columns(2)
-            
-            with col_d1:
-                # Descargar Excel
-                excel_buffer = io.BytesIO()
-                df_temp = pd.DataFrame([despacho])
-                df_temp[columnas].to_excel(excel_buffer, index=False)
-                
-                st.download_button(
-                    label=f"📥 Descargar Planilla {despacho['nrovia']} (Excel)",
-                    data=excel_buffer.getvalue(),
-                    file_name=f"planilla_{despacho['nrovia']}_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.ms-excel",
-                    key=f"excel_{despacho['nrovia']}"
-                )
-            
-            with col_d2:
-                # Descargar CSV
-                csv = pd.DataFrame([despacho])[columnas].to_csv(index=False)
-                st.download_button(
-                    label=f"📥 Descargar Planilla {despacho['nrovia']} (CSV)", 
-                    data=csv,
-                    file_name=f"planilla_{despacho['nrovia']}_{datetime.now().strftime('%Y%m%d')}.csv",
-                    mime="text/csv",
-                    key=f"csv_{despacho['nrovia']}"
-                )
-    
-    # Botones de descarga general (solo admin/supervisor)
-    if tiene_permiso(['admin', 'supervisor']):
-        st.subheader("📦 Descargas Masivas")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Descargar Excel general
-            excel_buffer = io.BytesIO()
-            df[columnas].to_excel(excel_buffer, index=False)
-            st.download_button(
-                label="📥 Descargar Todos los Despachos (Excel)",
-                data=excel_buffer.getvalue(),
-                file_name=f"despachos_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.ms-excel"
-            )
-        
-        with col2:
-            # Descargar CSV general
-            csv = df[columnas].to_csv(index=False)
-            st.download_button(
-                label="📥 Descargar Todos los Despachos (CSV)", 
-                data=csv,
-                file_name=f"despachos_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
-            )
+                st.write(f"**Prioridad:** {despacho['prioridad']}")
 
 def seguimiento_despachos():
     """Seguimiento de despachos"""
@@ -661,7 +629,7 @@ def main():
         if tiene_permiso(['admin', 'supervisor']):
             opciones_menu.extend([
                 "👥 Gestión Clientes", 
-                "🚚 Gestión Conductores", 
+                "👤 Gestión Conductores", 
                 "📅 Planificación", 
                 "🚚 Despacho"
             ])
@@ -683,7 +651,7 @@ def main():
         mostrar_dashboard()
     elif opcion == "👥 Gestión Clientes":
         gestion_clientes()
-    elif opcion == "🚚 Gestión Conductores":
+    elif opcion == "👤 Gestión Conductores":
         gestion_conductores_vehiculos()
     elif opcion == "🔐 Gestión Usuarios":
         gestion_usuarios()
