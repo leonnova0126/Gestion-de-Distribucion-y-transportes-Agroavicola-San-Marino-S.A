@@ -248,11 +248,10 @@ def planificacion_semanal():
     st.header("📅 Planificación de Desplazamiento Laboral")
     
     # Tabs para diferentes funcionalidades
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "➕ Nueva Planificación", 
         "📋 Planificación Existente", 
-        "📊 Programación Semanal",
-        "📦 Cargas/Pasajeros"
+        "📊 Programación Semanal"
     ])
     
     with tab1:
@@ -494,77 +493,6 @@ def planificacion_semanal():
                     st.bar_chart(resumen_dias.set_index('Día')['N° Despachos'])
         else:
             st.info("No hay planificaciones para esta semana")
-    
-    with tab4:
-        st.subheader("📦 Gestión de Cargas y Pasajeros")
-        
-        st.markdown("### 🚚 Distribución de Cargas")
-        
-        if st.session_state.planificacion:
-            # Resumen por vehículo
-            carga_vehiculos = {}
-            for plan in st.session_state.planificacion:
-                if plan['estado'] in ['PLANIFICADO', 'PROGRAMADO']:
-                    vehiculo = plan['vehiculo']
-                    if vehiculo not in carga_vehiculos:
-                        carga_vehiculos[vehiculo] = 0
-                    carga_vehiculos[vehiculo] += plan['cantidad']
-            
-            if carga_vehiculos:
-                st.markdown("#### Carga por Vehículo")
-                for vehiculo, carga in carga_vehiculos.items():
-                    capacidad_vehiculo = 5000  # Valor por defecto, podrías obtenerlo de los datos reales
-                    porcentaje = min((carga / capacidad_vehiculo) * 100, 100)
-                    
-                    st.write(f"**{vehiculo}**")
-                    st.progress(porcentaje/100)
-                    st.write(f"{carga:,} pollos ({porcentaje:.1f}% de capacidad)")
-                    st.markdown("---")
-            else:
-                st.info("No hay cargas programadas")
-        
-        st.markdown("### 👥 Asignación de Conductores")
-        
-        if st.session_state.conductores and st.session_state.planificacion:
-            # Resumen por conductor
-            asignacion_conductores = {}
-            for plan in st.session_state.planificacion:
-                if plan['estado'] in ['PLANIFICADO', 'PROGRAMADO']:
-                    conductor = plan['conductor']
-                    if conductor not in asignacion_conductores:
-                        asignacion_conductores[conductor] = []
-                    asignacion_conductores[conductor].append(plan)
-            
-            for conductor, planes in asignacion_conductores.items():
-                with st.expander(f"🧑‍✈️ {conductor} - {len(planes)} viajes asignados"):
-                    for plan in planes:
-                        st.write(f"**Lote {plan['lote']}** - {plan['cliente']} - {plan['cantidad']} pollos - {plan['prioridad']}")
-        
-        # Información de procedimientos
-        st.markdown("---")
-        st.markdown("### 📋 Procedimientos de Seguridad")
-        
-        col_proc1, col_proc2 = st.columns(2)
-        
-        with col_proc1:
-            st.markdown("#### ✅ Checklist Pre-Viaje")
-            verif_vehiculo = st.checkbox("Verificación estado del vehículo")
-            verif_documentos = st.checkbox("Verificación de documentos")
-            verif_carga = st.checkbox("Verificación de carga segura")
-            verif_ruta = st.checkbox("Planificación de ruta verificada")
-            
-            if st.button("📝 Registrar Verificación"):
-                if verif_vehiculo and verif_documentos and verif_carga and verif_ruta:
-                    st.success("✅ Verificación completada satisfactoriamente")
-                else:
-                    st.warning("⚠️ Complete todas las verificaciones")
-        
-        with col_proc2:
-            st.markdown("#### 🚨 Protocolos de Emergencia")
-            st.write("- Contacto emergencias: 24/7")
-            st.write("- Seguro vehicular: ACTIVO")
-            st.write("- Kit primeros auxilios: REQUERIDO")
-            st.write("- Comunicación satelital: DISPONIBLE")
 
 # =============================================
 # FUNCIONES PRINCIPALES (MANTENIENDO LAS EXISTENTES)
