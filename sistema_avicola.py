@@ -85,6 +85,23 @@ if 'despachos' not in st.session_state:
     st.session_state.despachos = []
 
 # =============================================
+# LISTAS ACTUALIZADAS SEGÚN ESPECIFICACIONES
+# =============================================
+
+ZONAS = [
+    "Magdalena Medio", "Sur", "Norte", "Babcock distribución", 
+    "Ocaña", "Málaga", "Centro", "Gerencia", "Antioquia", "Venezuela"
+]
+
+PLANTAS_NACIMIENTO = [
+    "Distraves", "Esperanza 1", "San Gil", "Girón", "Otras"
+]
+
+PLANES_VACUNALES = [
+    "STANDARD", "PREMIUM", "BASIC", "PERSONALIZADO"
+]
+
+# =============================================
 # SISTEMA DE GENERACIÓN DE NÚMEROS DE DESPACHO
 # =============================================
 
@@ -465,6 +482,465 @@ def gestion_usuarios():
                         st.error("❌ El usuario ya existe")
                 else:
                     st.warning("⚠️ Complete todos los campos")
+
+# =============================================
+# GESTIÓN DE CLIENTES MEJORADA
+# =============================================
+
+def gestion_clientes():
+    """Gestión de clientes - VERSIÓN MEJORADA CON CARGA DE ARCHIVOS"""
+    if not tiene_permiso(['admin', 'supervisor']):
+        st.error("⛔ No tienes permisos para acceder a esta sección")
+        return
+    
+    st.header("👥 Gestión de Clientes")
+    
+    # Tabs para diferentes funcionalidades
+    tab1, tab2, tab3 = st.tabs([
+        "➕ Agregar Cliente Manual", 
+        "📤 Cargar desde Excel", 
+        "📋 Lista de Clientes"
+    ])
+    
+    with tab1:
+        st.subheader("➕ Agregar Nuevo Cliente Manualmente")
+        with st.form("nuevo_cliente"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                codigo = st.text_input("Código", value=f"C{len(st.session_state.clientes)+1:03d}")
+                nombre_cliente = st.text_input("Nombre del Cliente*")
+                identificacion = st.text_input("Identificación*")
+                municipio_entrega = st.text_input("Municipio de Entrega*")
+                granja = st.text_input("Granja*")
+            
+            with col2:
+                zona = st.selectbox("Zona*", ZONAS)
+                codigo_vendedor = st.text_input("Código de Vendedor")
+                codigo_vacunal = st.text_input("Código Vacunal*")
+                plan_vacunal = st.selectbox("Plan Vacunal*", PLANES_VACUNALES)
+                planta_nacimiento = st.selectbox("Planta de Nacimiento*", PLANTAS_NACIMIENTO)
+                if planta_nacimiento == "Otras":
+                    planta_nacimiento = st.text_input("Especificar planta")
+                
+                observaciones = st.text_area("Observaciones")
+            
+            st.markdown("**Campos obligatorios***")
+            
+            if st.form_submit_button("💾 Guardar Cliente"):
+                if (nombre_cliente and identificacion and municipio_entrega and 
+                    granja and zona and codigo_vacunal and plan_vacunal and planta_nacimiento):
+                    
+                    # Verificar si el código ya existe
+                    if any(c['codigo'] == codigo for c in st.session_state.clientes):
+                        st.error("❌ El código de cliente ya existe")
+                    else:
+                        nuevo_cliente = {
+                            'codigo': codigo,
+                            'nombre': nombre_cliente,
+                            'identificacion': identificacion,
+                            'municipio_entrega': municipio_entrega,
+                            'granja': granja,
+                            'zona': zona,
+                            'codigo_vendedor': codigo_vendedor,
+                            'codigo_vacunal': codigo_vacunal,
+                            'plan_vacunal': plan_vacunal,
+                            'planta_nacimiento': planta_nacimiento,
+                            'observaciones': observaciones,
+                            'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            'registrado_por': st.session_state.usuario_actual
+                        }
+                        st.session_state.clientes.append(nuevo_cliente)
+                        st.success("✅ Cliente guardado exitosamente!")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ Complete todos los campos obligatorios")
+    
+    with tab2:
+        st.subheader("📤 Cargar Clientes desde Archivo Excel")
+        
+        st.info("""
+        **Formato requerido del archivo Excel:**
+        
+        El archivo debe contener las siguientes columnas (en cualquier orden):
+        - **Nombre de cliente** (obligatorio)
+        - **Identificación** (obligatorio)
+        - **Municipio de entrega** (obligatorio)
+        - **Granja** (obligatorio)
+        - **Zona** (obligatorio)
+        - **Código de vendedor** (opcional)
+        - **Código vacunal** (obligatorio)
+        - **Plan Vacunal** (obligatorio)
+        - **Planta de Nacimiento** (obligatorio)
+        - **Observaciones** (opcional)
+        
+        **Zonas válidas:** Magdalena Medio, Sur, Norte, Babcock distribución, Ocaña, Málaga, Centro, Gerencia, Antioquia, Venezuela
+        
+        **Plantas válidas:** Distraves, Esperanza 1, San Gil, Girón, Otras
+        """)
+        
+        archivo_excel = st.file_uploader(
+            "Seleccionar archivo Excel", 
+            type=['xlsx', 'xls'],
+            help="Suba un archivo Excel con las columnas especificadas"
+        )
+        
+        if archivo_excel is not None:
+            try:
+                # Leer el archivo Excel
+                df = pd.read_excel(archivo_excel)
+                
+                st.success("✅ Archivo cargado correctamente")
+                st.write("**Vista previa del archivo:**")
+                st.dataframe(df.head())
+                
+                # Verificar columnas requeridas
+                columnas_requeridas = [
+                    'nombre de cliente', 'identificación', 'municipio de entrega', 
+                    'granja', 'zona', 'código vacunal', 'plan vacunal', 'planta de nacimiento'
+                ]
+                
+                # Normalizar nombres de columnas (minúsculas y sin espacios extras)
+                df.columns = df.columns.str.strip().str.lower()
+                
+                columnas_faltantes = [col for col in columnas_requeridas if col not in df.columns]
+                
+                if columnas_faltantes:
+                    st.error(f"❌ Faltan las siguientes columnas obligatorias: {', '.join(columnas_faltantes)}")
+                    st.info("💡 Asegúrese de que los nombres de las columnas coincidan exactamente")
+                else:
+                    st.success("✅ Todas las columnas requeridas están presentes")
+                    
+                    # Validar zonas
+                    zonas_validas = set(ZONAS)
+                    zonas_archivo = set(df['zona'].dropna().unique())
+                    zonas_invalidas = zonas_archivo - zonas_validas
+                    
+                    if zonas_invalidas:
+                        st.warning(f"⚠️ Se encontraron zonas no válidas: {', '.join(zonas_invalidas)}")
+                        st.info(f"💡 Zonas válidas: {', '.join(ZONAS)}")
+                    
+                    # Validar plantas
+                    plantas_validas = set(PLANTAS_NACIMIENTO)
+                    plantas_archivo = set(df['planta de nacimiento'].dropna().unique())
+                    plantas_invalidas = plantas_archivo - plantas_validas
+                    
+                    if plantas_invalidas:
+                        st.warning(f"⚠️ Se encontraron plantas no válidas: {', '.join(plantas_invalidas)}")
+                        st.info(f"💡 Plantas válidas: {', '.join(PLANTAS_NACIMIENTO)}")
+                    
+                    # Mostrar resumen de datos a importar
+                    st.subheader("📊 Resumen de Importación")
+                    col_res1, col_res2, col_res3 = st.columns(3)
+                    
+                    with col_res1:
+                        st.metric("Registros a importar", len(df))
+                    
+                    with col_res2:
+                        clientes_nuevos = len([row for _, row in df.iterrows() 
+                                             if not any(c['identificacion'] == str(row['identificación']) 
+                                                      for c in st.session_state.clientes)])
+                        st.metric("Clientes nuevos", clientes_nuevos)
+                    
+                    with col_res3:
+                        clientes_existentes = len(df) - clientes_nuevos
+                        st.metric("Clientes existentes", clientes_existentes)
+                    
+                    # Opciones de importación
+                    st.subheader("⚙️ Opciones de Importación")
+                    
+                    politica_duplicados = st.radio(
+                        "¿Qué hacer con clientes existentes?",
+                        ["Mantener existentes y agregar nuevos", "Reemplazar clientes existentes"],
+                        help="Los clientes existentes se identifican por el número de identificación"
+                    )
+                    
+                    if st.button("📥 Importar Clientes", type="primary"):
+                        clientes_importados = 0
+                        clientes_actualizados = 0
+                        errores = 0
+                        
+                        for index, fila in df.iterrows():
+                            try:
+                                # Preparar datos del cliente
+                                identificacion_str = str(fila['identificación'])
+                                
+                                # Validar zona
+                                zona_fila = fila['zona']
+                                if zona_fila not in ZONAS:
+                                    st.warning(f"Fila {index + 2}: Zona '{zona_fila}' no válida. Se omitirá.")
+                                    continue
+                                
+                                # Validar planta
+                                planta_fila = fila['planta de nacimiento']
+                                if planta_fila not in PLANTAS_NACIMIENTO:
+                                    st.warning(f"Fila {index + 2}: Planta '{planta_fila}' no válida. Se omitirá.")
+                                    continue
+                                
+                                # Buscar si el cliente ya existe
+                                cliente_existente = next(
+                                    (c for c in st.session_state.clientes 
+                                     if c['identificacion'] == identificacion_str), 
+                                    None
+                                )
+                                
+                                if cliente_existente:
+                                    if politica_duplicados == "Reemplazar clientes existentes":
+                                        # Actualizar cliente existente
+                                        cliente_existente.update({
+                                            'nombre': fila['nombre de cliente'],
+                                            'municipio_entrega': fila['municipio de entrega'],
+                                            'granja': fila['granja'],
+                                            'zona': zona_fila,
+                                            'codigo_vendedor': fila.get('código de vendedor', ''),
+                                            'codigo_vacunal': fila['código vacunal'],
+                                            'plan_vacunal': fila['plan vacunal'].upper(),
+                                            'planta_nacimiento': planta_fila,
+                                            'observaciones': fila.get('observaciones', ''),
+                                            'fecha_actualizacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                            'actualizado_por': st.session_state.usuario_actual
+                                        })
+                                        clientes_actualizados += 1
+                                    # Si es "Mantener existentes", no hacemos nada
+                                else:
+                                    # Crear nuevo cliente
+                                    nuevo_cliente = {
+                                        'codigo': f"C{len(st.session_state.clientes)+1:03d}",
+                                        'nombre': fila['nombre de cliente'],
+                                        'identificacion': identificacion_str,
+                                        'municipio_entrega': fila['municipio de entrega'],
+                                        'granja': fila['granja'],
+                                        'zona': zona_fila,
+                                        'codigo_vendedor': fila.get('código de vendedor', ''),
+                                        'codigo_vacunal': fila['código vacunal'],
+                                        'plan_vacunal': fila['plan vacunal'].upper(),
+                                        'planta_nacimiento': planta_fila,
+                                        'observaciones': fila.get('observaciones', ''),
+                                        'fecha_registro': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        'registrado_por': st.session_state.usuario_actual
+                                    }
+                                    st.session_state.clientes.append(nuevo_cliente)
+                                    clientes_importados += 1
+                                    
+                            except Exception as e:
+                                errores += 1
+                                st.warning(f"Error en fila {index + 2}: {str(e)}")
+                        
+                        # Mostrar resultados
+                        st.success(f"✅ Importación completada!")
+                        st.write(f"**Resultados:**")
+                        st.write(f"- 📥 Clientes nuevos importados: {clientes_importados}")
+                        if politica_duplicados == "Reemplazar clientes existentes":
+                            st.write(f"- 🔄 Clientes actualizados: {clientes_actualizados}")
+                        st.write(f"- ❌ Errores: {errores}")
+                        
+                        st.rerun()
+                        
+            except Exception as e:
+                st.error(f"❌ Error al leer el archivo: {str(e)}")
+                st.info("💡 Asegúrese de que el archivo sea un Excel válido y tenga el formato correcto")
+    
+    with tab3:
+        st.subheader("📋 Lista de Clientes")
+        
+        if st.session_state.clientes:
+            # Crear DataFrame para mostrar
+            datos_tabla = []
+            for cliente in st.session_state.clientes:
+                datos_tabla.append({
+                    'Código': cliente['codigo'],
+                    'Nombre': cliente['nombre'],
+                    'Identificación': cliente.get('identificacion', 'N/A'),
+                    'Municipio': cliente.get('municipio_entrega', 'N/A'),
+                    'Granja': cliente.get('granja', 'N/A'),
+                    'Zona': cliente.get('zona', 'N/A'),
+                    'Código Vacunal': cliente.get('codigo_vacunal', 'N/A'),
+                    'Plan Vacunal': cliente.get('plan_vacunal', 'N/A'),
+                    'Planta Nac.': cliente.get('planta_nacimiento', 'N/A')
+                })
+            
+            df_clientes = pd.DataFrame(datos_tabla)
+            st.dataframe(df_clientes, use_container_width=True)
+            
+            # Estadísticas
+            st.subheader("📊 Estadísticas de Clientes")
+            col_stat1, col_stat2, col_stat3 = st.columns(3)
+            
+            with col_stat1:
+                st.metric("Total Clientes", len(st.session_state.clientes))
+            
+            with col_stat2:
+                por_zona = df_clientes['Zona'].value_counts()
+                zona_mayor = por_zona.index[0] if len(por_zona) > 0 else "N/A"
+                st.metric("Zona con más clientes", zona_mayor)
+            
+            with col_stat3:
+                planes = df_clientes['Plan Vacunal'].value_counts()
+                plan_mayor = planes.index[0] if len(planes) > 0 else "N/A"
+                st.metric("Plan más común", plan_mayor)
+            
+            # Exportar datos
+            st.subheader("📤 Exportar Datos")
+            csv = df_clientes.to_csv(index=False, encoding='utf-8')
+            
+            st.download_button(
+                label="📥 Descargar Lista de Clientes (CSV)",
+                data=csv,
+                file_name=f"clientes_san_marino_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+            
+            # Opción para eliminar cliente (solo admin)
+            st.markdown("---")
+            st.subheader("🗑️ Gestión de Clientes")
+            
+            if tiene_permiso(['admin']):
+                col_elim1, col_elim2 = st.columns(2)
+                
+                with col_elim1:
+                    cliente_a_eliminar = st.selectbox(
+                        "Seleccionar cliente a eliminar:",
+                        [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.clientes],
+                        key="eliminar_cliente"
+                    )
+                    
+                    if st.button("🗑️ Eliminar Cliente Seleccionado", type="primary"):
+                        codigo_eliminar = cliente_a_eliminar.split(" - ")[0]
+                        st.session_state.clientes = [c for c in st.session_state.clientes if c['codigo'] != codigo_eliminar]
+                        st.success("✅ Cliente eliminado!")
+                        st.rerun()
+                
+                with col_elim2:
+                    if st.button("🗑️ Eliminar TODOS los clientes", type="secondary"):
+                        if st.checkbox("⚠️ Confirmar eliminación de TODOS los clientes"):
+                            st.session_state.clientes = []
+                            st.success("✅ Todos los clientes eliminados!")
+                            st.rerun()
+        else:
+            st.info("No hay clientes registrados")
+
+# =============================================
+# GESTIÓN DE CONDUCTORES
+# =============================================
+
+def gestion_conductores_vehiculos():
+    """Gestión de conductores SIMPLIFICADA - solo nombre e identificación"""
+    if not tiene_permiso(['admin', 'supervisor']):
+        st.error("⛔ No tienes permisos para acceder a esta sección")
+        return
+    
+    st.header("👤 Gestión de Conductores")
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("➕ Agregar Conductor")
+        with st.form("nuevo_conductor"):
+            codigo = st.text_input("Código Conductor", value=f"D{len(st.session_state.conductores)+1:03d}")
+            nombre = st.text_input("Nombre Completo")
+            identificacion = st.text_input("Número de Identificación")
+            
+            if st.form_submit_button("💾 Guardar Conductor"):
+                if codigo and nombre and identificacion:
+                    # Verificar si el código ya existe
+                    if any(c['codigo'] == codigo for c in st.session_state.conductores):
+                        st.error("❌ El código de conductor ya existe")
+                    else:
+                        nuevo_conductor = {
+                            'codigo': codigo,
+                            'nombre': nombre,
+                            'identificacion': identificacion
+                        }
+                        st.session_state.conductores.append(nuevo_conductor)
+                        st.success("✅ Conductor guardado exitosamente!")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ Complete todos los campos")
+        
+        st.markdown("---")
+        st.subheader("📤 Importar desde CSV")
+        
+        archivo_csv = st.file_uploader("Subir archivo CSV con conductores", type=['csv'])
+        
+        if archivo_csv is not None:
+            try:
+                df = pd.read_csv(archivo_csv)
+                st.write("Vista previa del archivo:")
+                st.dataframe(df.head())
+                
+                # Verificar columnas requeridas
+                columnas_requeridas = ['codigo', 'nombre', 'identificacion']
+                if all(col in df.columns for col in columnas_requeridas):
+                    if st.button("📥 Importar Conductores"):
+                        nuevos = 0
+                        for _, fila in df.iterrows():
+                            if not any(c['codigo'] == fila['codigo'] for c in st.session_state.conductores):
+                                st.session_state.conductores.append({
+                                    'codigo': fila['codigo'],
+                                    'nombre': fila['nombre'],
+                                    'identificacion': fila['identificacion']
+                                })
+                                nuevos += 1
+                        st.success(f"✅ Importados {nuevos} nuevos conductores!")
+                        st.rerun()
+                else:
+                    st.error("❌ El archivo debe contener las columnas: codigo, nombre, identificacion")
+            except Exception as e:
+                st.error(f"❌ Error al leer el archivo: {e}")
+    
+    with col2:
+        st.subheader("📋 Lista de Conductores")
+        
+        if st.session_state.conductores:
+            # Crear DataFrame para mostrar
+            datos_tabla = []
+            for conductor in st.session_state.conductores:
+                datos_tabla.append({
+                    'Código': conductor['codigo'],
+                    'Nombre': conductor['nombre'],
+                    'Identificación': conductor['identificacion']
+                })
+            
+            df_conductores = pd.DataFrame(datos_tabla)
+            st.dataframe(df_conductores, use_container_width=True)
+            
+            # Botón para exportar a CSV
+            csv = df_conductores.to_csv(index=False)
+            
+            st.download_button(
+                label="📥 Descargar Lista de Conductores (CSV)",
+                data=csv,
+                file_name=f"conductores_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+            
+            # Opción para eliminar conductor
+            st.markdown("---")
+            st.subheader("🗑️ Eliminar Conductor")
+            
+            if st.session_state.conductores:
+                conductor_a_eliminar = st.selectbox(
+                    "Seleccionar conductor a eliminar:",
+                    [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.conductores],
+                    key="eliminar_conductor"
+                )
+                
+                col_btn1, col_btn2 = st.columns(2)
+                
+                with col_btn1:
+                    if st.button("🗑️ Eliminar Conductor Seleccionado", type="primary"):
+                        codigo_eliminar = conductor_a_eliminar.split(" - ")[0]
+                        st.session_state.conductores = [c for c in st.session_state.conductores if c['codigo'] != codigo_eliminar]
+                        st.success("✅ Conductor eliminado!")
+                        st.rerun()
+                
+                with col_btn2:
+                    if st.button("🗑️ Eliminar TODOS los conductores"):
+                        st.session_state.conductores = []
+                        st.success("✅ Todos los conductores eliminados!")
+                        st.rerun()
+        else:
+            st.info("No hay conductores registrados")
 
 # =============================================
 # MÓDULO MEJORADO DE PLANIFICACIÓN
@@ -949,7 +1425,7 @@ def seguimiento_despachos():
                 st.success("✅ Estado actualizado!")
 
 # =============================================
-# FUNCIONES PRINCIPALES (MANTENIENDO LAS EXISTENTES)
+# DASHBOARD PRINCIPAL
 # =============================================
 
 def mostrar_dashboard():
@@ -984,180 +1460,6 @@ def mostrar_dashboard():
     
     st.markdown("---")
     st.markdown("**Sistema de Gestión v3.0 - Con Seguridad**")
-
-def gestion_clientes():
-    """Gestión de clientes"""
-    if not tiene_permiso(['admin', 'supervisor']):
-        st.error("⛔ No tienes permisos para acceder a esta sección")
-        return
-    
-    st.header("👥 Gestión de Clientes")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.subheader("➕ Agregar Nuevo Cliente")
-        with st.form("nuevo_cliente"):
-            codigo = st.text_input("Código", value=f"C{len(st.session_state.clientes)+1:03d}")
-            nombre = st.text_input("Nombre del Cliente")
-            municipio = st.text_input("Municipio")
-            zona = st.selectbox("Zona", ["NORTE", "SUR", "ESTE", "OESTE", "CENTRO", "ANTIOQUIA"])
-            ruta = st.text_input("Ruta")
-            plan_vacunal = st.selectbox("Plan Vacunal", ["STANDARD", "PREMIUM", "BASIC"])
-            
-            if st.form_submit_button("💾 Guardar Cliente"):
-                nuevo_cliente = {
-                    'codigo': codigo,
-                    'nombre': nombre,
-                    'municipio': municipio,
-                    'zona': zona,
-                    'ruta': ruta,
-                    'plan_vacunal': plan_vacunal
-                }
-                st.session_state.clientes.append(nuevo_cliente)
-                st.success("✅ Cliente guardado exitosamente!")
-                st.rerun()
-    
-    with col2:
-        st.subheader("📋 Lista de Clientes")
-        if st.session_state.clientes:
-            df_clientes = pd.DataFrame(st.session_state.clientes)
-            st.dataframe(df_clientes, use_container_width=True)
-            
-            # Opción para eliminar cliente (solo admin)
-            if st.session_state.clientes and tiene_permiso(['admin']):
-                cliente_a_eliminar = st.selectbox(
-                    "Seleccionar cliente a eliminar:",
-                    [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.clientes],
-                    key="eliminar_cliente"
-                )
-                
-                if st.button("🗑️ Eliminar Cliente Seleccionado"):
-                    codigo_eliminar = cliente_a_eliminar.split(" - ")[0]
-                    st.session_state.clientes = [c for c in st.session_state.clientes if c['codigo'] != codigo_eliminar]
-                    st.success("✅ Cliente eliminado!")
-                    st.rerun()
-        else:
-            st.info("No hay clientes registrados")
-
-def gestion_conductores_vehiculos():
-    """Gestión de conductores SIMPLIFICADA - solo nombre e identificación"""
-    if not tiene_permiso(['admin', 'supervisor']):
-        st.error("⛔ No tienes permisos para acceder a esta sección")
-        return
-    
-    st.header("👤 Gestión de Conductores")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.subheader("➕ Agregar Conductor")
-        with st.form("nuevo_conductor"):
-            codigo = st.text_input("Código Conductor", value=f"D{len(st.session_state.conductores)+1:03d}")
-            nombre = st.text_input("Nombre Completo")
-            identificacion = st.text_input("Número de Identificación")
-            
-            if st.form_submit_button("💾 Guardar Conductor"):
-                if codigo and nombre and identificacion:
-                    # Verificar si el código ya existe
-                    if any(c['codigo'] == codigo for c in st.session_state.conductores):
-                        st.error("❌ El código de conductor ya existe")
-                    else:
-                        nuevo_conductor = {
-                            'codigo': codigo,
-                            'nombre': nombre,
-                            'identificacion': identificacion
-                        }
-                        st.session_state.conductores.append(nuevo_conductor)
-                        st.success("✅ Conductor guardado exitosamente!")
-                        st.rerun()
-                else:
-                    st.warning("⚠️ Complete todos los campos")
-        
-        st.markdown("---")
-        st.subheader("📤 Importar desde CSV")
-        
-        archivo_csv = st.file_uploader("Subir archivo CSV con conductores", type=['csv'])
-        
-        if archivo_csv is not None:
-            try:
-                df = pd.read_csv(archivo_csv)
-                st.write("Vista previa del archivo:")
-                st.dataframe(df.head())
-                
-                # Verificar columnas requeridas
-                columnas_requeridas = ['codigo', 'nombre', 'identificacion']
-                if all(col in df.columns for col in columnas_requeridas):
-                    if st.button("📥 Importar Conductores"):
-                        nuevos = 0
-                        for _, fila in df.iterrows():
-                            if not any(c['codigo'] == fila['codigo'] for c in st.session_state.conductores):
-                                st.session_state.conductores.append({
-                                    'codigo': fila['codigo'],
-                                    'nombre': fila['nombre'],
-                                    'identificacion': fila['identificacion']
-                                })
-                                nuevos += 1
-                        st.success(f"✅ Importados {nuevos} nuevos conductores!")
-                        st.rerun()
-                else:
-                    st.error("❌ El archivo debe contener las columnas: codigo, nombre, identificacion")
-            except Exception as e:
-                st.error(f"❌ Error al leer el archivo: {e}")
-    
-    with col2:
-        st.subheader("📋 Lista de Conductores")
-        
-        if st.session_state.conductores:
-            # Crear DataFrame para mostrar
-            datos_tabla = []
-            for conductor in st.session_state.conductores:
-                datos_tabla.append({
-                    'Código': conductor['codigo'],
-                    'Nombre': conductor['nombre'],
-                    'Identificación': conductor['identificacion']
-                })
-            
-            df_conductores = pd.DataFrame(datos_tabla)
-            st.dataframe(df_conductores, use_container_width=True)
-            
-            # Botón para exportar a CSV
-            csv = df_conductores.to_csv(index=False)
-            
-            st.download_button(
-                label="📥 Descargar Lista de Conductores (CSV)",
-                data=csv,
-                file_name=f"conductores_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
-            )
-            
-            # Opción para eliminar conductor
-            st.markdown("---")
-            st.subheader("🗑️ Eliminar Conductor")
-            
-            if st.session_state.conductores:
-                conductor_a_eliminar = st.selectbox(
-                    "Seleccionar conductor a eliminar:",
-                    [f"{c['codigo']} - {c['nombre']}" for c in st.session_state.conductores],
-                    key="eliminar_conductor"
-                )
-                
-                col_btn1, col_btn2 = st.columns(2)
-                
-                with col_btn1:
-                    if st.button("🗑️ Eliminar Conductor Seleccionado", type="primary"):
-                        codigo_eliminar = conductor_a_eliminar.split(" - ")[0]
-                        st.session_state.conductores = [c for c in st.session_state.conductores if c['codigo'] != codigo_eliminar]
-                        st.success("✅ Conductor eliminado!")
-                        st.rerun()
-                
-                with col_btn2:
-                    if st.button("🗑️ Eliminar TODOS los conductores"):
-                        st.session_state.conductores = []
-                        st.success("✅ Todos los conductores eliminados!")
-                        st.rerun()
-        else:
-            st.info("No hay conductores registrados")
 
 # =============================================
 # MENÚ PRINCIPAL
