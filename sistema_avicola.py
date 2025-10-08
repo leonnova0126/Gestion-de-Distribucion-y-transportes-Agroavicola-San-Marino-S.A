@@ -15,6 +15,135 @@ st.set_page_config(
 )
 
 # =============================================
+# ESTILOS PROFESIONALES MEJORADOS
+# =============================================
+
+st.markdown("""
+<style>
+    /* Estilos generales */
+    .main-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        padding: 2rem;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .company-logo {
+        font-family: 'Arial Black', sans-serif;
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .company-subtitle {
+        font-family: 'Arial', sans-serif;
+        font-size: 1.2rem;
+        opacity: 0.9;
+        font-weight: 300;
+        letter-spacing: 2px;
+    }
+    
+    .system-title {
+        font-size: 1.5rem;
+        margin-top: 1rem;
+        opacity: 0.95;
+        font-weight: 400;
+    }
+    
+    /* Estilos para tarjetas */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #2a5298;
+        margin-bottom: 1rem;
+    }
+    
+    /* Estilos para botones */
+    .stButton button {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }
+    
+    .stButton button:hover {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        color: white;
+    }
+    
+    /* Estilos para sidebar */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    /* Estilos para tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background-color: #f8f9fa;
+        border-radius: 4px 4px 0px 0px;
+        padding: 10px 16px;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #2a5298;
+        color: white;
+    }
+    
+    /* Estilos para formularios */
+    .stTextInput input, .stSelectbox select, .stDateInput input, .stNumberInput input {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    
+    /* Estilos para tablas */
+    .dataframe {
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    /* Login container mejorado */
+    .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 40px;
+        border: 1px solid #ddd;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .login-logo {
+        font-family: 'Arial Black', sans-serif;
+        font-size: 2rem;
+        color: #1e3c72;
+        margin-bottom: 0.5rem;
+    }
+    
+    .login-subtitle {
+        font-family: 'Arial', sans-serif;
+        color: #666;
+        font-size: 0.9rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# =============================================
 # SISTEMA DE AUTENTICACIÓN SEGURO
 # =============================================
 
@@ -341,11 +470,11 @@ def generar_html_planilla(despacho):
     return html
 
 # =============================================
-# SISTEMA DE LOGIN
+# SISTEMA DE LOGIN MEJORADO
 # =============================================
 
 def mostrar_login():
-    """Interfaz de login"""
+    """Interfaz de login profesional"""
     st.markdown(
         """
         <style>
@@ -354,9 +483,24 @@ def mostrar_login():
             margin: 100px auto;
             padding: 40px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            background-color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-logo {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 2rem;
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+        .login-subtitle {
+            font-family: 'Arial', sans-serif;
+            color: #666;
+            font-size: 0.9rem;
         }
         </style>
         """,
@@ -366,15 +510,27 @@ def mostrar_login():
     with st.container():
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        st.title("🐔 San Marino")
-        st.subheader("Sistema de Gestión Avícola")
+        # Header del login
+        st.markdown(
+            """
+            <div class="login-header">
+                <div class="login-logo">SANMARINO</div>
+                <div class="login-subtitle">GENETICA AVICOLA</div>
+                <div style="margin-top: 1rem; color: #333; font-size: 1.1rem;">
+                    Sistema de Gestión
+                </div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+        
         st.markdown("---")
         
         with st.form("login_form"):
             usuario = st.text_input("👤 Usuario", placeholder="Ingrese su usuario")
             password = st.text_input("🔒 Contraseña", type="password", placeholder="Ingrese su contraseña")
             
-            if st.form_submit_button("🚀 Ingresar al Sistema"):
+            if st.form_submit_button("🚀 Ingresar al Sistema", use_container_width=True):
                 if usuario and password:
                     if usuario in st.session_state.usuarios:
                         usuario_data = st.session_state.usuarios[usuario]
@@ -430,6 +586,23 @@ def mostrar_logout():
             st.session_state.usuario_actual = None
             st.session_state.rol_actual = None
             st.rerun()
+
+# =============================================
+# HEADER PROFESIONAL
+# =============================================
+
+def mostrar_header_profesional():
+    """Muestra el header profesional con el logo de la empresa"""
+    st.markdown(
+        """
+        <div class="main-header">
+            <div class="company-logo">SANMARINO</div>
+            <div class="company-subtitle">GENETICA AVICOLA</div>
+            <div class="system-title">Sistema de Gestión Integral</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # =============================================
 # GESTIÓN DE USUARIOS (SOLO ADMIN)
@@ -1431,13 +1604,14 @@ def seguimiento_despachos():
                 st.success("✅ Estado actualizado!")
 
 # =============================================
-# DASHBOARD PRINCIPAL
+# DASHBOARD PRINCIPAL MEJORADO
 # =============================================
 
 def mostrar_dashboard():
     """Dashboard principal"""
     st.header("📊 Dashboard")
     
+    # Métricas principales
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Clientes", len(st.session_state.clientes))
@@ -1465,10 +1639,10 @@ def mostrar_dashboard():
             st.write(f"- Planificación total: {len(st.session_state.planificacion)}")
     
     st.markdown("---")
-    st.markdown("**Sistema de Gestión v3.0 - Con Seguridad**")
+    st.markdown("**Sistema de Gestión v3.0 - SANMARINO GENETICA AVICOLA**")
 
 # =============================================
-# MENÚ PRINCIPAL
+# MENÚ PRINCIPAL MEJORADO
 # =============================================
 
 def main():
@@ -1480,8 +1654,8 @@ def main():
     # Mostrar barra de usuario
     mostrar_logout()
     
-    st.title("🐔 Sistema de Gestión - Agroavícola San Marino")
-    st.markdown("---")
+    # Mostrar header profesional
+    mostrar_header_profesional()
     
     # Menú en sidebar según permisos
     with st.sidebar:
