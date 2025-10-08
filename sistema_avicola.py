@@ -56,11 +56,11 @@ if 'usuarios' not in st.session_state:
 if 'clientes' not in st.session_state:
     st.session_state.clientes = [
         {'codigo': 'C001', 'nombre': 'GRANJA SAN MARCOS', 'municipio': 'CUCUTA', 
-         'zona': 'NORTE', 'ruta': 'CUCUTA', 'plan_vacunal': 'STANDARD'},
+         'zona': 'NORTE', 'plan_vacunal': 'STANDARD'},
         {'codigo': 'C002', 'nombre': 'AVICOLA EL PROGRESO', 'municipio': 'RIONEGRO', 
-         'zona': 'ANTIOQUIA', 'ruta': 'ANTIOQUIA', 'plan_vacunal': 'PREMIUM'},
+         'zona': 'ANTIOQUIA', 'plan_vacunal': 'PREMIUM'},
         {'codigo': 'C003', 'nombre': 'GRANJA LA ESPERANZA', 'municipio': 'GIRON', 
-         'zona': 'CENTRO', 'ruta': 'GIRON', 'plan_vacunal': 'BASIC'},
+         'zona': 'CENTRO', 'plan_vacunal': 'BASIC'},
     ]
 
 # CONDUCTORES SIMPLIFICADOS - SOLO NOMBRE E IDENTIFICACIÓN
@@ -91,6 +91,14 @@ if 'despachos' not in st.session_state:
 ZONAS = [
     "Magdalena Medio", "Sur", "Norte", "Babcock distribución", 
     "Ocaña", "Málaga", "Centro", "Gerencia", "Antioquia", "Venezuela"
+]
+
+# RUTAS ACTUALIZADAS SEGÚN ESPECIFICACIÓN
+RUTAS = [
+    "CENTRO", "CUCUTA", "MADROÑO", "MALAGA", "REMESAS GIRÓN", 
+    "BODEGA GIRÓN", "REMESAS SAN GIL", "BODEGA SAN GIL", 
+    "SUR PRODUCTOR", "ANTIOQUIA", "BARRANCABERMEJA", "OCAÑA", 
+    "SUR DE BOLIVAR", "SUR LARGA", "PUERTO BERRIO"
 ]
 
 PLANTAS_NACIMIENTO = [
@@ -484,11 +492,11 @@ def gestion_usuarios():
                     st.warning("⚠️ Complete todos los campos")
 
 # =============================================
-# GESTIÓN DE CLIENTES MEJORADA
+# GESTIÓN DE CLIENTES MEJORADA (SIN RUTA ASIGNADA)
 # =============================================
 
 def gestion_clientes():
-    """Gestión de clientes - VERSIÓN MEJORADA CON CARGA DE ARCHIVOS"""
+    """Gestión de clientes - VERSIÓN MEJORADA SIN RUTA ASIGNADA"""
     if not tiene_permiso(['admin', 'supervisor']):
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
@@ -594,7 +602,7 @@ def gestion_clientes():
                 st.write("**Vista previa del archivo:**")
                 st.dataframe(df.head())
                 
-                # Verificar columnas requeridas
+                # Verificar columnas requeridas (sin ruta)
                 columnas_requeridas = [
                     'nombre de cliente', 'identificación', 'municipio de entrega', 
                     'granja', 'zona', 'código vacunal', 'plan vacunal', 'planta de nacimiento'
@@ -991,9 +999,7 @@ def planificacion_semanal():
                 st.markdown("**🚚 Información de Transporte**")
                 conductor = st.selectbox("Conductor Asignado", [c['nombre'] for c in st.session_state.conductores])
                 vehiculo = st.selectbox("Vehículo", [f"{v['placa']} - {v['marca']} {v['modelo']}" for v in st.session_state.vehiculos])
-                ruta = st.selectbox("Ruta Asignada", ["CUCUTA", "BUCARAMANGA", "RIONEGRO", "GIRON", "OTRA"])
-                if ruta == "OTRA":
-                    ruta = st.text_input("Especificar ruta")
+                ruta = st.selectbox("Ruta Asignada", RUTAS)
                 
                 planta_incubacion = st.selectbox("Planta de Incubación", ["1", "2"], 
                                                format_func=lambda x: "San Gil" if x == "1" else "Girón")
