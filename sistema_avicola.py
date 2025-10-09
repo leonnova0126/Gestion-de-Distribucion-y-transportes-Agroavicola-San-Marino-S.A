@@ -15,200 +15,423 @@ st.set_page_config(
 )
 
 # =============================================
-# ESTILOS PROFESIONALES MEJORADOS
+# ESTILOS PROFESIONALES PREMIUM - ROJO Y BLANCO
 # =============================================
 
 st.markdown("""
 <style>
-    /* Estilos generales */
+    /* === ESTILOS GLOBALES === */
+    .main {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    /* === HEADER PRINCIPAL === */
     .main-header {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        padding: 2rem;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+        padding: 2.5rem;
+        border-radius: 15px;
         color: white;
         text-align: center;
         margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .company-logo {
-        font-family: 'Arial Black', sans-serif;
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .company-subtitle {
-        font-family: 'Arial', sans-serif;
-        font-size: 1.2rem;
-        opacity: 0.9;
-        font-weight: 300;
-        letter-spacing: 2px;
-    }
-    
-    .system-title {
-        font-size: 1.5rem;
-        margin-top: 1rem;
-        opacity: 0.95;
-        font-weight: 400;
-    }
-    
-    /* Estilos para tarjetas */
-    .metric-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #2a5298;
-        margin-bottom: 1rem;
-    }
-    
-    /* Estilos para botones */
-    .stButton button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-    }
-    
-    .stButton button:hover {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-        color: white;
-    }
-    
-    /* Estilos para sidebar */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-    
-    /* Estilos para tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: #f8f9fa;
-        border-radius: 4px 4px 0px 0px;
-        padding: 10px 16px;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #2a5298;
-        color: white;
-    }
-    
-    /* Estilos para formularios */
-    .stTextInput input, .stSelectbox select, .stDateInput input, .stNumberInput input {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-    }
-    
-    /* Estilos para tablas */
-    .dataframe {
-        border-radius: 5px;
+        box-shadow: 0 8px 25px rgba(183, 28, 28, 0.3);
+        border: 1px solid #ffcdd2;
+        position: relative;
         overflow: hidden;
     }
     
-    /* Login container mejorado */
-    .login-container {
-        max-width: 400px;
-        margin: 100px auto;
-        padding: 40px;
-        border: 1px solid #ddd;
-        border-radius: 15px;
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ffeb3b, #ff9800, #ff5722);
+    }
+    
+    .company-logo {
+        font-family: 'Segoe UI', 'Arial Black', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        letter-spacing: 1px;
+        background: linear-gradient(135deg, #ffffff 0%, #ffebee 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .company-subtitle {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 1.4rem;
+        opacity: 0.95;
+        font-weight: 300;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .system-title {
+        font-size: 1.3rem;
+        margin-top: 1rem;
+        opacity: 0.9;
+        font-weight: 400;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        display: inline-block;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* === TARJETAS DE MÉTRICAS === */
+    .metric-card {
         background: white;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 1.8rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.1);
+        border-left: 5px solid #d32f2f;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border: 1px solid #ffcdd2;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(211, 47, 47, 0.2);
+    }
+    
+    /* === BOTONES PREMIUM === */
+    .stButton button {
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', sans-serif;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        border: 1px solid #ff8a80;
+    }
+    
+    .stButton button:hover {
+        background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
+    }
+    
+    .stButton button:active {
+        transform: translateY(0);
+    }
+    
+    /* === SIDEBAR ELEGANTE === */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #ffffff 0%, #fce4ec 100%);
+        border-right: 3px solid #d32f2f;
+    }
+    
+    .css-1d391kg .stRadio label {
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 500;
+    }
+    
+    /* === TABS PROFESIONALES === */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 12px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: white;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-weight: 500;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #fff3e0;
+        border-color: #ff9800;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+        color: white;
+        border-color: #d32f2f;
+        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+    }
+    
+    /* === FORMULARIOS ELEGANTES === */
+    .stTextInput input, .stSelectbox select, .stDateInput input, .stNumberInput input {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-family: 'Segoe UI', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .stTextInput input:focus, .stSelectbox select:focus, .stDateInput input:focus, .stNumberInput input:focus {
+        border-color: #d32f2f;
+        box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+    }
+    
+    /* === TABLAS PROFESIONALES === */
+    .dataframe {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+    
+    .dataframe thead th {
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%) !important;
+        color: white !important;
+        font-weight: 600;
+        text-align: center;
+        border: none;
+    }
+    
+    /* === LOGIN PREMIUM === */
+    .login-container {
+        max-width: 450px;
+        margin: 80px auto;
+        padding: 50px;
+        border: none;
+        border-radius: 20px;
+        background: white;
+        box-shadow: 0 20px 50px rgba(183, 28, 28, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #d32f2f, #ff5252, #d32f2f);
     }
     
     .login-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
     
     .login-logo {
-        font-family: 'Arial Black', sans-serif;
-        font-size: 2rem;
-        color: #1e3c72;
+        font-family: 'Segoe UI', 'Arial Black', sans-serif;
+        font-size: 2.2rem;
+        color: #d32f2f;
         margin-bottom: 0.5rem;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     
     .login-subtitle {
-        font-family: 'Arial', sans-serif;
+        font-family: 'Segoe UI', sans-serif;
         color: #666;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        letter-spacing: 1px;
     }
     
-    /* Estilos para tablas de programación */
+    /* === TABLAS DE PROGRAMACIÓN === */
     .programacion-table {
         width: 100%;
         border-collapse: collapse;
         margin: 1rem 0;
         font-size: 11px;
-        font-family: Arial, sans-serif;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        font-family: 'Segoe UI', sans-serif;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        overflow: hidden;
     }
     
     .programacion-table th {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
         color: white;
-        padding: 10px 6px;
+        padding: 14px 8px;
         text-align: center;
-        border: 1px solid #1e3c72;
-        font-weight: bold;
+        border: none;
+        font-weight: 600;
         font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     
     .programacion-table td {
-        padding: 8px 6px;
-        border: 1px solid #ddd;
+        padding: 12px 8px;
+        border: 1px solid #f0f0f0;
         text-align: center;
         vertical-align: middle;
-    }
-    
-    .programacion-table .total-row {
-        background-color: #e8f4fd;
-        font-weight: bold;
-        color: #1e3c72;
-        border-top: 2px solid #2a5298;
-    }
-    
-    .programacion-table .subtotal-row {
-        background-color: #f0f8ff;
-        font-weight: bold;
-        color: #2a5298;
-        border-top: 1px solid #2a5298;
+        transition: all 0.3s ease;
     }
     
     .programacion-table tr:nth-child(even) {
-        background-color: #f8f9fa;
+        background-color: #fafafa;
     }
     
     .programacion-table tr:hover {
-        background-color: #e3f2fd;
-        transition: background-color 0.2s;
+        background-color: #fff3e0;
+        transform: scale(1.01);
     }
     
+    .programacion-table .total-row {
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        font-weight: 700;
+        color: #b71c1c;
+        border-top: 3px solid #d32f2f;
+    }
+    
+    .programacion-table .subtotal-row {
+        background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+        font-weight: 600;
+        color: #c2185b;
+        border-top: 2px solid #d32f2f;
+    }
+    
+    /* === HEADER DE FECHA === */
     .fecha-header {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 10px 10px 0 0;
+        padding: 1.8rem;
+        border-radius: 15px 15px 0 0;
         margin-top: 2rem;
         margin-bottom: 0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 20px rgba(183, 28, 28, 0.2);
+        border: 1px solid #ffcdd2;
     }
     
+    .fecha-header h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+    }
+    
+    .fecha-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+    
+    /* === SECCIÓN DE DESCARGA === */
     .download-section {
-        background: #f8f9fa;
-        padding: 1.5rem;
+        background: linear-gradient(135deg, #fff3e0 0%, #ffebee 100%);
+        padding: 2rem;
+        border-radius: 12px;
+        border-left: 5px solid #ff9800;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.1);
+        border: 1px solid #ffe0b2;
+    }
+    
+    /* === BADGES Y ESTADOS === */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-planned {
+        background: #fff3e0;
+        color: #ef6c00;
+        border: 1px solid #ffb74d;
+    }
+    
+    .status-progress {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #64b5f6;
+    }
+    
+    .status-completed {
+        background: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #81c784;
+    }
+    
+    /* === MENÚ LATERAL MEJORADO === */
+    .sidebar .sidebar-content {
+        background: linear-gradient(180deg, #ffffff 0%, #fce4ec 100%);
+    }
+    
+    /* === ICONOS ANIMADOS === */
+    .icon-animate {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .icon-animate:hover {
+        transform: scale(1.2) rotate(5deg);
+    }
+    
+    /* === SCROLLBAR PERSONALIZADO === */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
         border-radius: 10px;
-        border-left: 4px solid #2a5298;
-        margin: 1rem 0;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+        border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+    }
+    
+    /* === EFECTOS DE SOMBRA Y PROFUNDIDAD === */
+    .shadow-premium {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .shadow-deep {
+        box-shadow: 0 15px 40px rgba(183, 28, 28, 0.15);
+    }
+    
+    /* === TÍTULOS Y ENCABEZADOS === */
+    .section-title {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #d32f2f;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #ffcdd2;
+        display: inline-block;
+    }
+    
+    /* === ALERTAS Y NOTIFICACIONES === */
+    .stAlert {
+        border-radius: 10px;
+        border-left: 5px solid;
+    }
+    
+    .stSuccess {
+        border-left-color: #4caf50;
+    }
+    
+    .stError {
+        border-left-color: #d32f2f;
+    }
+    
+    .stWarning {
+        border-left-color: #ff9800;
+    }
+    
+    .stInfo {
+        border-left-color: #2196f3;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -457,7 +680,8 @@ def generar_html_planilla(despacho):
     </head>
     <body>
         <div class="header">
-            <div class="company-name">Planilla de Distribución y Transporte Regional Oriente</div>
+            <div class="company-name">AGROAVÍCOLA SAN MARINO S.A.</div>
+            <div class="document-title">Planilla de Distribución y Transporte Regional Oriente</div>
             <div><strong>Cost. SGST - IBIS - Fecha y Hora de Impresión de Planilla:</strong> {datetime.now().strftime('%d/%m/%Y %I:%M %p')}</div>
             <div><strong>Gráfico:</strong> 1704-4070-02</div>
         </div>
@@ -569,7 +793,7 @@ def generar_html_planilla(despacho):
         </div>
 
         <div class="footer">
-            <p>Sistema de Gestión - Agroavícola San Marino</p>
+            <p>AGROAVÍCOLA SAN MARINO S.A. - Área de Distribución y Transportes Regional Oriente</p>
             <p>Despacho {despacho['numero_despacho']} - Planta de Cargue: {planta_cargue} - Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
         </div>
     </body>
@@ -606,12 +830,12 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
                 text-align: center;
                 margin-bottom: 30px;
                 padding-bottom: 20px;
-                border-bottom: 3px solid #2a5298;
+                border-bottom: 3px solid #d32f2f;
             }}
             .company-name {{
                 font-size: 24px;
                 font-weight: bold;
-                color: #2a5298;
+                color: #d32f2f;
                 margin-bottom: 5px;
             }}
             .company-subtitle {{
@@ -622,15 +846,15 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
             .report-title {{
                 font-size: 18px;
                 font-weight: bold;
-                color: #1e3c72;
+                color: #b71c1c;
                 margin: 15px 0;
             }}
             .report-info {{
-                background: #f8f9fa;
+                background: #ffebee;
                 padding: 15px;
                 border-radius: 8px;
                 margin: 15px 0;
-                border-left: 4px solid #2a5298;
+                border-left: 4px solid #d32f2f;
             }}
             .programacion-table {{
                 width: 100%;
@@ -640,11 +864,11 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }}
             .programacion-table th {{
-                background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+                background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
                 color: white;
                 padding: 12px 8px;
                 text-align: center;
-                border: 1px solid #1e3c72;
+                border: 1px solid #b71c1c;
                 font-weight: bold;
                 font-size: 9px;
                 text-transform: uppercase;
@@ -657,29 +881,29 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
                 vertical-align: middle;
             }}
             .programacion-table .total-row {{
-                background-color: #e8f4fd;
+                background-color: #ffebee;
                 font-weight: bold;
-                color: #1e3c72;
-                border-top: 2px solid #2a5298;
+                color: #b71c1c;
+                border-top: 2px solid #d32f2f;
             }}
             .programacion-table .subtotal-row {{
-                background-color: #f0f8ff;
+                background-color: #fce4ec;
                 font-weight: bold;
-                color: #2a5298;
-                border-top: 1px solid #2a5298;
+                color: #c2185b;
+                border-top: 1px solid #d32f2f;
             }}
             .programacion-table tr:nth-child(even) {{
-                background-color: #f8f9fa;
+                background-color: #fafafa;
             }}
             .programacion-table tr:hover {{
-                background-color: #e3f2fd;
+                background-color: #fff3e0;
             }}
             .summary {{
-                background: #e8f4fd;
+                background: #ffebee;
                 padding: 15px;
                 border-radius: 8px;
                 margin-top: 20px;
-                border: 1px solid #2a5298;
+                border: 1px solid #d32f2f;
             }}
             .footer {{
                 margin-top: 30px;
@@ -693,8 +917,8 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
     </head>
     <body>
         <div class="header">
-            <div class="company-name">SANMARINO</div>
-            <div class="company-subtitle">GENETICA AVICOLA</div>
+            <div class="company-name">AGROAVÍCOLA SAN MARINO S.A.</div>
+            <div class="company-subtitle">ÁREA DE DISTRIBUCIÓN Y TRANSPORTES REGIONAL ORIENTE</div>
             <div class="report-title">PROGRAMACIÓN DE DESPACHOS</div>
         </div>
         
@@ -799,7 +1023,8 @@ def generar_html_programacion(planificaciones_filtradas, fecha_str):
         </div>
         
         <div class="footer">
-            Sistema de Gestión San Marino - Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}<br>
+            AGROAVÍCOLA SAN MARINO S.A. - Área de Distribución y Transportes Regional Oriente<br>
+            Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}<br>
             Este reporte fue generado automáticamente por el sistema de programación de despachos.
         </div>
     </body>
@@ -982,37 +1207,55 @@ def mostrar_programacion_diaria(planificaciones_filtradas):
             )
 
 # =============================================
-# SISTEMA DE LOGIN MEJORADO
+# SISTEMA DE LOGIN PREMIUM
 # =============================================
 
 def mostrar_login():
-    """Interfaz de login profesional"""
+    """Interfaz de login premium"""
     st.markdown(
         """
         <style>
         .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 40px;
-            border: 1px solid #ddd;
-            border-radius: 15px;
+            max-width: 450px;
+            margin: 80px auto;
+            padding: 50px;
+            border: none;
+            border-radius: 20px;
             background: white;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 50px rgba(183, 28, 28, 0.2);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #d32f2f, #ff5252, #d32f2f);
+        }
+        
         .login-header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
+        
         .login-logo {
-            font-family: 'Arial Black', sans-serif;
-            font-size: 2rem;
-            color: #1e3c72;
+            font-family: 'Segoe UI', 'Arial Black', sans-serif;
+            font-size: 2.2rem;
+            color: #d32f2f;
             margin-bottom: 0.5rem;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
+        
         .login-subtitle {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             color: #666;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            letter-spacing: 1px;
         }
         </style>
         """,
@@ -1026,10 +1269,10 @@ def mostrar_login():
         st.markdown(
             """
             <div class="login-header">
-                <div class="login-logo">SANMARINO</div>
-                <div class="login-subtitle">GENETICA AVICOLA</div>
-                <div style="margin-top: 1rem; color: #333; font-size: 1.1rem;">
-                    Sistema de Gestión
+                <div class="login-logo">AGROAVÍCOLA SAN MARINO S.A.</div>
+                <div class="login-subtitle">ÁREA DE DISTRIBUCIÓN Y TRANSPORTES REGIONAL ORIENTE</div>
+                <div style="margin-top: 1rem; color: #333; font-size: 1.1rem; font-weight: 500;">
+                    Sistema de Gestión de Despachos
                 </div>
             </div>
             """, 
@@ -1100,17 +1343,17 @@ def mostrar_logout():
             st.rerun()
 
 # =============================================
-# HEADER PROFESIONAL
+# HEADER PROFESIONAL PREMIUM
 # =============================================
 
 def mostrar_header_profesional():
-    """Muestra el header profesional con el logo de la empresa"""
+    """Muestra el header profesional premium con el logo de la empresa"""
     st.markdown(
         """
         <div class="main-header">
-            <div class="company-logo">SANMARINO</div>
-            <div class="company-subtitle">GENETICA AVICOLA</div>
-            <div class="system-title">Sistema de Gestión Integral</div>
+            <div class="company-logo">AGROAVÍCOLA SAN MARINO S.A.</div>
+            <div class="company-subtitle">ÁREA DE DISTRIBUCIÓN Y TRANSPORTES REGIONAL ORIENTE</div>
+            <div class="system-title">Sistema de Gestión de Despachos Avícolas</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -1126,7 +1369,7 @@ def gestion_usuarios():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("👥 Gestión de Usuarios del Sistema")
+    st.markdown('<div class="section-title">👥 Gestión de Usuarios del Sistema</div>', unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["📋 Usuarios Existentes", "➕ Crear Nuevo Usuario"])
     
@@ -1186,7 +1429,7 @@ def gestion_clientes():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("👥 Gestión de Clientes")
+    st.markdown('<div class="section-title">👥 Gestión de Clientes</div>', unsafe_allow_html=True)
     
     # Tabs para diferentes funcionalidades
     tab1, tab2, tab3 = st.tabs([
@@ -1479,7 +1722,7 @@ def gestion_clientes():
             st.download_button(
                 label="📥 Descargar Lista de Clientes (CSV)",
                 data=csv,
-                file_name=f"clientes_san_marino_{datetime.now().strftime('%Y%m%d')}.csv",
+                file_name=f"clientes_agroavicola_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv"
             )
             
@@ -1522,7 +1765,7 @@ def gestion_conductores_vehiculos():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("👤 Gestión de Conductores")
+    st.markdown('<div class="section-title">👤 Gestión de Conductores</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([1, 2])
     
@@ -1645,7 +1888,7 @@ def gestion_vehiculos():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("🚗 Gestión de Vehículos")
+    st.markdown('<div class="section-title">🚗 Gestión de Vehículos</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([1, 2])
     
@@ -1764,7 +2007,7 @@ def planificacion_semanal():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("📅 Programación de Despachos")
+    st.markdown('<div class="section-title">📅 Programación de Despachos</div>', unsafe_allow_html=True)
     
     # Tabs para diferentes funcionalidades
     tab1, tab2 = st.tabs([
@@ -1928,7 +2171,7 @@ def generar_despacho():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("🚚 Generar Despacho Diario")
+    st.markdown('<div class="section-title">🚚 Generar Despacho Diario</div>', unsafe_allow_html=True)
     
     fecha = st.date_input("Fecha para despacho", datetime.now())
     planta_incubacion = st.selectbox("Planta de Incubación", ["1", "2"], 
@@ -2005,7 +2248,7 @@ def planillas_distribucion():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("📋 Planillas de Distribución")
+    st.markdown('<div class="section-title">📋 Planillas de Distribución</div>', unsafe_allow_html=True)
     
     if not st.session_state.despachos:
         st.info("No hay despachos generados")
@@ -2094,7 +2337,7 @@ def seguimiento_despachos():
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("📍 Seguimiento de Despachos")
+    st.markdown('<div class="section-title">📍 Seguimiento de Despachos</div>', unsafe_allow_html=True)
     
     if not st.session_state.despachos:
         st.info("No hay despachos para seguir")
@@ -2123,24 +2366,24 @@ def seguimiento_despachos():
                 st.success("✅ Estado actualizado!")
 
 # =============================================
-# DASHBOARD PRINCIPAL MEJORADO
+# DASHBOARD PRINCIPAL PREMIUM
 # =============================================
 
 def mostrar_dashboard():
-    """Dashboard principal"""
-    st.header("📊 Dashboard")
+    """Dashboard principal premium"""
+    st.markdown('<div class="section-title">📊 Dashboard</div>', unsafe_allow_html=True)
     
     # Métricas principales
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Clientes", len(st.session_state.clientes))
+        st.metric("👥 Clientes", len(st.session_state.clientes))
     with col2:
-        st.metric("Conductores", len(st.session_state.conductores))
+        st.metric("👤 Conductores", len(st.session_state.conductores))
     with col3:
-        st.metric("Vehículos", len(st.session_state.vehiculos))
+        st.metric("🚗 Vehículos", len(st.session_state.vehiculos))
     with col4:
         pendientes = len([p for p in st.session_state.planificacion if p.get('estado') in ['PLANIFICADO', 'PROGRAMADO']])
-        st.metric("Planificaciones Pendientes", pendientes)
+        st.metric("📅 Planificaciones Pendientes", pendientes)
     
     # Información adicional solo para admin/supervisor
     if tiene_permiso(['admin', 'supervisor']):
@@ -2149,19 +2392,25 @@ def mostrar_dashboard():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**Usuarios Conectados:**")
-            st.write(f"- {st.session_state.get('nombre_usuario', 'N/A')} ({st.session_state.get('rol_actual', 'N/A')})")
+            st.markdown("**👥 Usuarios Conectados:**")
+            st.markdown(f"- **{st.session_state.get('nombre_usuario', 'N/A')}** ({st.session_state.get('rol_actual', 'N/A')})")
         
         with col2:
-            st.write("**Estadísticas del Sistema:**")
-            st.write(f"- Total despachos: {len(st.session_state.despachos)}")
-            st.write(f"- Planificación total: {len(st.session_state.planificacion)}")
+            st.markdown("**📊 Estadísticas del Sistema:**")
+            st.markdown(f"- **Total despachos:** {len(st.session_state.despachos)}")
+            st.markdown(f"- **Planificación total:** {len(st.session_state.planificacion)}")
     
     st.markdown("---")
-    st.markdown("**Sistema de Gestión v3.0 - SANMARINO GENETICA AVICOLA**")
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%); border-radius: 15px; border: 2px solid #ffcdd2;">
+        <h3 style="color: #d32f2f; margin-bottom: 1rem;">🚀 Sistema de Gestión v4.0</h3>
+        <p style="color: #666; font-size: 1.1rem; margin: 0;"><strong>AGROAVÍCOLA SAN MARINO S.A.</strong></p>
+        <p style="color: #888; margin-top: 0.5rem;">Área de Distribución y Transportes Regional Oriente</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # =============================================
-# MENÚ PRINCIPAL MEJORADO
+# MENÚ PRINCIPAL PREMIUM
 # =============================================
 
 def main():
@@ -2173,12 +2422,17 @@ def main():
     # Mostrar barra de usuario
     mostrar_logout()
     
-    # Mostrar header profesional
+    # Mostrar header profesional premium
     mostrar_header_profesional()
     
     # Menú en sidebar según permisos
     with st.sidebar:
-        st.subheader("🧭 Navegación")
+        st.markdown("""
+        <div style="text-align: center; margin-bottom: 2rem; padding: 1rem; background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); border-radius: 10px; color: white;">
+            <h3 style="margin: 0; font-size: 1.2rem;">🧭 Navegación</h3>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.9;">Distribución y Transportes</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         opciones_menu = ["📊 Dashboard"]
         
