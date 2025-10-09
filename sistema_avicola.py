@@ -140,6 +140,76 @@ st.markdown("""
         color: #666;
         font-size: 0.9rem;
     }
+    
+    /* Estilos para tablas de programación */
+    .programacion-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 11px;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .programacion-table th {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        color: white;
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid #1e3c72;
+        font-weight: bold;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .programacion-table td {
+        padding: 8px 6px;
+        border: 1px solid #ddd;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .programacion-table .total-row {
+        background-color: #e8f4fd;
+        font-weight: bold;
+        color: #1e3c72;
+        border-top: 2px solid #2a5298;
+    }
+    
+    .programacion-table .subtotal-row {
+        background-color: #f0f8ff;
+        font-weight: bold;
+        color: #2a5298;
+        border-top: 1px solid #2a5298;
+    }
+    
+    .programacion-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .programacion-table tr:hover {
+        background-color: #e3f2fd;
+        transition: background-color 0.2s;
+    }
+    
+    .fecha-header {
+        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px 10px 0 0;
+        margin-top: 2rem;
+        margin-bottom: 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .download-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid #2a5298;
+        margin: 1rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -275,22 +345,43 @@ def obtener_orden_cargue_dia(fecha_despacho, planta_incubacion):
     return len(despachos_dia) + 1
 
 # =============================================
-# GENERACIÓN DE PLANILLAS HTML
+# GENERACIÓN DE PLANILLAS HTML PROFESIONALES
 # =============================================
 
 def generar_html_planilla(despacho):
-    """Genera HTML de planilla de distribución"""
+    """Genera HTML de planilla de distribución profesional"""
+    
+    # Obtener información del vehículo
+    vehiculo_placa = despacho['vehiculo'].split(' - ')[0] if ' - ' in despacho['vehiculo'] else despacho['vehiculo']
+    
+    # Determinar planta de cargue
+    planta_cargue = "San Gil" if despacho['planta_incubacion'] == '1' else "Girón"
+    
+    # Calcular totales por producto
+    total_azur = 0
+    total_polita = 0
+    total_polito = 0
+    total_polito_sasso = 0
+    
+    if 'detalle_productos' in despacho:
+        for detalle in despacho['detalle_productos']:
+            total_azur += detalle.get('azur', 0)
+            total_polita += detalle.get('polita', 0)
+            total_polito += detalle.get('polito', 0)
+            total_polito_sasso += detalle.get('polito_sasso', 0)
+    
     html = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
-        <title>Planilla {despacho['numero_despacho']}</title>
+        <title>Planilla de Distribución {despacho['numero_despacho']}</title>
         <style>
             body {{
                 font-family: Arial, sans-serif;
-                margin: 20px;
+                margin: 15px;
                 font-size: 12px;
+                color: #333;
             }}
             .header {{
                 text-align: center;
@@ -298,106 +389,116 @@ def generar_html_planilla(despacho):
                 border-bottom: 2px solid #000;
                 padding-bottom: 10px;
             }}
+            .company-name {{
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }}
+            .document-title {{
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0;
+            }}
+            .info-section {{
+                margin: 15px 0;
+            }}
             .info-table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-bottom: 15px;
+                font-size: 11px;
             }}
             .info-table td {{
-                padding: 5px;
+                padding: 6px;
                 border: 1px solid #000;
+                vertical-align: top;
             }}
-            .main-table {{
+            .info-table th {{
+                padding: 6px;
+                border: 1px solid #000;
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }}
+            .products-table {{
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 20px;
+                margin: 15px 0;
+                font-size: 10px;
             }}
-            .main-table th, .main-table td {{
+            .products-table th, .products-table td {{
                 border: 1px solid #000;
                 padding: 5px;
                 text-align: center;
-                font-size: 10px;
             }}
-            .main-table th {{
+            .products-table th {{
                 background-color: #f0f0f0;
-            }}
-            .totals {{
                 font-weight: bold;
-                background-color: #e0e0e0;
             }}
-            .signatures {{
+            .totals-row {{
+                background-color: #e0e0e0;
+                font-weight: bold;
+            }}
+            .signature-section {{
                 margin-top: 30px;
                 display: flex;
                 justify-content: space-between;
+            }}
+            .signature-box {{
+                text-align: center;
+                width: 45%;
             }}
             .footer {{
                 margin-top: 20px;
                 font-size: 10px;
                 text-align: center;
+                color: #666;
             }}
         </style>
     </head>
     <body>
         <div class="header">
-            <h2>Planilla de Distribución y Transporte Regional Oriente</h2>
-            <table class="info-table">
-                <tr>
-                    <td>Cost. SGSIT - IBIS - Fecha y Hora de Impresión de Planilla: {datetime.now().strftime('%m/%d/%Y %I:%M %p')}</td>
-                    <td>Gráfico 1704-4070-02</td>
-                </tr>
-            </table>
+            <div class="company-name">Planilla de Distribución y Transporte Regional Oriente</div>
+            <div><strong>Cost. SGST - IBIS - Fecha y Hora de Impresión de Planilla:</strong> {datetime.now().strftime('%d/%m/%Y %I:%M %p')}</div>
+            <div><strong>Gráfico:</strong> 1704-4070-02</div>
         </div>
-        
+
         <table class="info-table">
             <tr>
-                <td><strong>Hora Aspecto</strong></td>
-                <td>6:00 AM</td>
-                <td><strong>Ruta Asignada</strong></td>
-                <td>{despacho.get('ruta', 'N/A')}</td>
+                <td style="width: 20%"><strong>Hora Aspecto</strong></td>
+                <td style="width: 30%">6:00 AM</td>
+                <td style="width: 20%"><strong>Ruta Asignada</strong></td>
+                <td style="width: 30%">{despacho.get('ruta', 'CENTRO')}</td>
             </tr>
             <tr>
                 <td><strong>Placa Programada</strong></td>
-                <td>{despacho.get('vehiculo', 'N/A').split(' - ')[0] if ' - ' in despacho.get('vehiculo', '') else despacho.get('vehiculo', 'N/A')}</td>
+                <td>{vehiculo_placa}</td>
                 <td><strong>Fecha de Cargue</strong></td>
-                <td>{datetime.strptime(despacho['fecha_despacho'], "%Y-%m-%d").strftime("%d/%m/%Y")}</td>
+                <td>{datetime.strptime(despacho['fecha_despacho'], '%Y-%m-%d').strftime('%d/%m/%Y')}</td>
             </tr>
             <tr>
                 <td><strong>Conductor</strong></td>
                 <td colspan="3">{despacho.get('conductor', 'N/A')}</td>
             </tr>
         </table>
-        
-        <div style="margin: 10px 0;">
+
+        <div class="info-section">
             <strong>No. Despacho: {despacho['numero_despacho']}</strong>
         </div>
-        
-        <div style="margin: 10px 0;">
+
+        <div class="info-section">
             <strong>Productos de Planilla</strong>
+            <table class="info-table">
+                <tr>
+                    <td><strong>Cantidades Totales</strong></td>
+                    <td>AZUR: {total_azur:,}</td>
+                    <td>POLITA: {total_polita:,}</td>
+                    <td>POLITO: {total_polito:,}</td>
+                    <td>POLITO SASSO: {total_polito_sasso:,}</td>
+                </tr>
+            </table>
         </div>
-        
-        <table class="info-table">
-            <tr>
-                <td><strong>Cantidades Totales</strong></td>
-    """
-    
-    # Calcular totales
-    productos = ['AZUR', 'POLITA', 'POLITO', 'POLITO SASSO']
-    totales = {producto: 0 for producto in productos}
-    
-    if 'detalle_productos' in despacho:
-        for detalle in despacho['detalle_productos']:
-            for producto in productos:
-                if producto.lower().replace(' ', '_') in detalle:
-                    totales[producto] += detalle.get(producto.lower().replace(' ', '_'), 0)
-    
-    for producto in productos:
-        html += f"<td>{producto}: {totales[producto]:,}</td>"
-    
-    html += """
-            </tr>
-        </table>
-        
-        <table class="main-table">
+
+        <table class="products-table">
             <thead>
                 <tr>
                     <th>Municipio/Provincia</th>
@@ -416,7 +517,7 @@ def generar_html_planilla(despacho):
             <tbody>
     """
     
-    # Agregar filas de datos
+    # Agregar filas de productos
     if 'detalle_productos' in despacho:
         for detalle in despacho['detalle_productos']:
             html += f"""
@@ -427,48 +528,458 @@ def generar_html_planilla(despacho):
                     <td>{detalle.get('plan_vacunal', 'N/A')}</td>
                     <td>{detalle.get('fecha_nacimiento', 'N/A')}</td>
                     <td>{detalle.get('lote', 'N/A')}</td>
-                    <td>{detalle.get('cantidad', 0)}</td>
-                    <td>{detalle.get('azur', 0)}</td>
-                    <td>{detalle.get('polita', 0)}</td>
-                    <td>{detalle.get('polito', 0)}</td>
-                    <td>{detalle.get('polito_sasso', 0)}</td>
+                    <td>{detalle.get('cantidad', 0):,}</td>
+                    <td>{detalle.get('azur', 0):,}</td>
+                    <td>{detalle.get('polita', 0):,}</td>
+                    <td>{detalle.get('polito', 0):,}</td>
+                    <td>{detalle.get('polito_sasso', 0):,}</td>
                 </tr>
             """
     
     # Fila de totales
+    total_general = total_azur + total_polita + total_polito + total_polito_sasso
     html += f"""
-                <tr class="totals">
-                    <td colspan="6">TOTALES</td>
-                    <td>{sum(totales.values())}</td>
-                    <td>{totales['AZUR']}</td>
-                    <td>{totales['POLITA']}</td>
-                    <td>{totales['POLITO']}</td>
-                    <td>{totales['POLITO SASSO']}</td>
+                <tr class="totals-row">
+                    <td colspan="6"><strong>TOTALES</strong></td>
+                    <td><strong>{total_general:,}</strong></td>
+                    <td><strong>{total_azur:,}</strong></td>
+                    <td><strong>{total_polita:,}</strong></td>
+                    <td><strong>{total_polito:,}</strong></td>
+                    <td><strong>{total_polito_sasso:,}</strong></td>
                 </tr>
             </tbody>
         </table>
-        
-        <div class="signatures">
-            <div>
+
+        <div class="signature-section">
+            <div class="signature-box">
                 <p>Firma Conductor: _________________________</p>
+                <p>Nombre: {despacho.get('conductor', '')}</p>
+                <p>C.C. _________________________</p>
             </div>
-            <div>
+            <div class="signature-box">
                 <p>Firma Cliente: _________________________</p>
+                <p>Nombre: _________________________</p>
+                <p>C.C. _________________________</p>
             </div>
         </div>
-        
-        <div style="margin-top: 20px;">
+
+        <div class="info-section">
             <p><strong>Observaciones:</strong> ___________________________________________________</p>
+            <p>_________________________________________________________________________________</p>
         </div>
-        
+
         <div class="footer">
             <p>Sistema de Gestión - Agroavícola San Marino</p>
+            <p>Despacho {despacho['numero_despacho']} - Planta de Cargue: {planta_cargue} - Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
         </div>
     </body>
     </html>
     """
     
     return html
+
+def generar_html_programacion(planificaciones_filtradas, fecha_str):
+    """Genera HTML profesional de la programación diaria"""
+    
+    fecha_obj = datetime.strptime(fecha_str, "%Y-%m-%d")
+    fecha_formateada = fecha_obj.strftime("%d/%m/%Y")
+    dia_semana = fecha_obj.strftime("%A")
+    
+    # Calcular totales
+    total_general = sum(p['cantidad'] for p in planificaciones_filtradas)
+    conductores_unicos = len(set(p['conductor'] for p in planificaciones_filtradas))
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Programación de Despachos - {fecha_formateada}</title>
+        <style>
+            body {{
+                font-family: 'Arial', sans-serif;
+                margin: 20px;
+                font-size: 12px;
+                color: #333;
+            }}
+            .header {{
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 3px solid #2a5298;
+            }}
+            .company-name {{
+                font-size: 24px;
+                font-weight: bold;
+                color: #2a5298;
+                margin-bottom: 5px;
+            }}
+            .company-subtitle {{
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+            }}
+            .report-title {{
+                font-size: 18px;
+                font-weight: bold;
+                color: #1e3c72;
+                margin: 15px 0;
+            }}
+            .report-info {{
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+                border-left: 4px solid #2a5298;
+            }}
+            .programacion-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                font-size: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }}
+            .programacion-table th {{
+                background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+                color: white;
+                padding: 12px 8px;
+                text-align: center;
+                border: 1px solid #1e3c72;
+                font-weight: bold;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+            .programacion-table td {{
+                padding: 10px 8px;
+                border: 1px solid #ddd;
+                text-align: center;
+                vertical-align: middle;
+            }}
+            .programacion-table .total-row {{
+                background-color: #e8f4fd;
+                font-weight: bold;
+                color: #1e3c72;
+                border-top: 2px solid #2a5298;
+            }}
+            .programacion-table .subtotal-row {{
+                background-color: #f0f8ff;
+                font-weight: bold;
+                color: #2a5298;
+                border-top: 1px solid #2a5298;
+            }}
+            .programacion-table tr:nth-child(even) {{
+                background-color: #f8f9fa;
+            }}
+            .programacion-table tr:hover {{
+                background-color: #e3f2fd;
+            }}
+            .summary {{
+                background: #e8f4fd;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 20px;
+                border: 1px solid #2a5298;
+            }}
+            .footer {{
+                margin-top: 30px;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+                border-top: 1px solid #ddd;
+                padding-top: 10px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="company-name">SANMARINO</div>
+            <div class="company-subtitle">GENETICA AVICOLA</div>
+            <div class="report-title">PROGRAMACIÓN DE DESPACHOS</div>
+        </div>
+        
+        <div class="report-info">
+            <strong>Fecha:</strong> {dia_semana} {fecha_formateada} | 
+            <strong>Total Viajes:</strong> {len(planificaciones_filtradas)} | 
+            <strong>Conductores:</strong> {conductores_unicos} | 
+            <strong>Total Pollos:</strong> {total_general:,}
+        </div>
+        
+        <table class="programacion-table">
+            <thead>
+                <tr>
+                    <th>N° Viaje</th>
+                    <th>Conductor</th>
+                    <th>Placa</th>
+                    <th>Ruta</th>
+                    <th>Zona</th>
+                    <th>Nombre cliente</th>
+                    <th>Granja</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+    """
+    
+    # Variables para calcular totales
+    total_general_calc = 0
+    planta_actual = None
+    subtotal_planta = 0
+    
+    # Ordenar por planta para agrupar
+    planificaciones_ordenadas = sorted(planificaciones_filtradas, key=lambda x: x['planta_incubacion'])
+    
+    for i, plan in enumerate(planificaciones_ordenadas):
+        # Número de viaje (número de despacho)
+        numero_viaje = plan.get('numero_despacho', f"PL{i+1:04d}")
+        
+        # Determinar nombre de la planta
+        planta_nombre = "San Gil" if plan['planta_incubacion'] == '1' else "Girón"
+        
+        # Si cambió de planta, mostrar subtotal
+        if planta_actual and planta_actual != plan['planta_incubacion']:
+            planta_nombre_anterior = "San Gil" if planta_actual == '1' else "Girón"
+            html += f"""
+                <tr class="subtotal-row">
+                    <td colspan="8"><strong>Total Planta de Cargue {planta_nombre_anterior}</strong></td>
+                    <td><strong>{subtotal_planta:,}</strong></td>
+                </tr>
+            """
+            subtotal_planta = 0
+        
+        planta_actual = plan['planta_incubacion']
+        subtotal_planta += plan['cantidad']
+        total_general_calc += plan['cantidad']
+        
+        # Extraer solo la placa del vehículo
+        vehiculo_placa = plan['vehiculo'].split(' - ')[0] if ' - ' in plan['vehiculo'] else plan['vehiculo']
+        
+        # Fila de datos
+        html += f"""
+            <tr>
+                <td>{numero_viaje}</td>
+                <td>{plan['conductor']}</td>
+                <td>{vehiculo_placa}</td>
+                <td>{plan.get('ruta', 'N/A')}</td>
+                <td>{plan.get('zona', 'N/A')}</td>
+                <td>{plan['cliente']}</td>
+                <td>{plan.get('destino_granja', 'N/A')}</td>
+                <td>{plan['producto']}</td>
+                <td>{plan['cantidad']:,}</td>
+            </tr>
+        """
+    
+    # Mostrar último subtotal
+    if planta_actual and subtotal_planta > 0:
+        planta_nombre_final = "San Gil" if planta_actual == '1' else "Girón"
+        html += f"""
+            <tr class="subtotal-row">
+                <td colspan="8"><strong>Total Planta de Cargue {planta_nombre_final}</strong></td>
+                <td><strong>{subtotal_planta:,}</strong></td>
+            </tr>
+        """
+    
+    # Mostrar total general
+    html += f"""
+            <tr class="total-row">
+                <td colspan="8"><strong>TOTAL GENERAL</strong></td>
+                <td><strong>{total_general_calc:,}</strong></td>
+            </tr>
+            </tbody>
+        </table>
+        
+        <div class="summary">
+            <strong>RESUMEN EJECUTIVO:</strong><br>
+            • Fecha de programación: {fecha_formateada}<br>
+            • Total de viajes programados: {len(planificaciones_filtradas)}<br>
+            • Número de conductores asignados: {conductores_unicos}<br>
+            • Cantidad total de pollos: {total_general_calc:,}<br>
+            • Plantas involucradas: {', '.join(set('San Gil' if p['planta_incubacion'] == '1' else 'Girón' for p in planificaciones_filtradas))}
+        </div>
+        
+        <div class="footer">
+            Sistema de Gestión San Marino - Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}<br>
+            Este reporte fue generado automáticamente por el sistema de programación de despachos.
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+
+def mostrar_programacion_diaria(planificaciones_filtradas):
+    """Muestra la programación diaria en formato de tabla profesional"""
+    
+    # Agrupar por fecha de despacho
+    fechas_despacho = sorted(set(p['fecha_despacho'] for p in planificaciones_filtradas))
+    
+    for fecha_str in fechas_despacho:
+        # Convertir fecha string a objeto datetime para formatear
+        fecha_obj = datetime.strptime(fecha_str, "%Y-%m-%d")
+        fecha_formateada = fecha_obj.strftime("%d/%m/%Y")
+        dia_semana = fecha_obj.strftime("%A")
+        
+        # Filtrar planificaciones para esta fecha
+        planificaciones_fecha = [p for p in planificaciones_filtradas if p['fecha_despacho'] == fecha_str]
+        
+        # Mostrar header de la fecha
+        st.markdown(f"""
+        <div class="fecha-header">
+            <h3>🗓️ Programación de Despachos - {dia_semana} {fecha_formateada}</h3>
+            <p>📊 {len(planificaciones_fecha)} viajes programados | 👤 {len(set(p['conductor'] for p in planificaciones_fecha))} conductores</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Crear tabla de programación
+        st.markdown("""
+        <table class="programacion-table">
+            <thead>
+                <tr>
+                    <th>N° Viaje</th>
+                    <th>Conductor</th>
+                    <th>Placa</th>
+                    <th>Ruta</th>
+                    <th>Zona</th>
+                    <th>Nombre cliente</th>
+                    <th>Granja</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+        """, unsafe_allow_html=True)
+        
+        # Variables para calcular totales
+        total_general = 0
+        planta_actual = None
+        subtotal_planta = 0
+        
+        # Ordenar por planta para agrupar
+        planificaciones_ordenadas = sorted(planificaciones_fecha, key=lambda x: x['planta_incubacion'])
+        
+        for i, plan in enumerate(planificaciones_ordenadas):
+            # Número de viaje (número de despacho)
+            numero_viaje = plan.get('numero_despacho', f"PL{i+1:04d}")
+            
+            # Determinar nombre de la planta
+            planta_nombre = "San Gil" if plan['planta_incubacion'] == '1' else "Girón"
+            
+            # Si cambió de planta, mostrar subtotal
+            if planta_actual and planta_actual != plan['planta_incubacion']:
+                planta_nombre_anterior = "San Gil" if planta_actual == '1' else "Girón"
+                st.markdown(f"""
+                <tr class="subtotal-row">
+                    <td colspan="8"><strong>Total Planta de Cargue {planta_nombre_anterior}</strong></td>
+                    <td><strong>{subtotal_planta:,}</strong></td>
+                </tr>
+                """, unsafe_allow_html=True)
+                subtotal_planta = 0
+            
+            planta_actual = plan['planta_incubacion']
+            subtotal_planta += plan['cantidad']
+            total_general += plan['cantidad']
+            
+            # Extraer solo la placa del vehículo
+            vehiculo_placa = plan['vehiculo'].split(' - ')[0] if ' - ' in plan['vehiculo'] else plan['vehiculo']
+            
+            # Fila de datos
+            st.markdown(f"""
+            <tr>
+                <td>{numero_viaje}</td>
+                <td>{plan['conductor']}</td>
+                <td>{vehiculo_placa}</td>
+                <td>{plan.get('ruta', 'N/A')}</td>
+                <td>{plan.get('zona', 'N/A')}</td>
+                <td>{plan['cliente']}</td>
+                <td>{plan.get('destino_granja', 'N/A')}</td>
+                <td>{plan['producto']}</td>
+                <td>{plan['cantidad']:,}</td>
+            </tr>
+            """, unsafe_allow_html=True)
+        
+        # Mostrar último subtotal
+        if planta_actual and subtotal_planta > 0:
+            planta_nombre_final = "San Gil" if planta_actual == '1' else "Girón"
+            st.markdown(f"""
+            <tr class="subtotal-row">
+                <td colspan="8"><strong>Total Planta de Cargue {planta_nombre_final}</strong></td>
+                <td><strong>{subtotal_planta:,}</strong></td>
+            </tr>
+            """, unsafe_allow_html=True)
+        
+        # Mostrar total general
+        st.markdown(f"""
+        <tr class="total-row">
+            <td colspan="8"><strong>TOTAL GENERAL</strong></td>
+            <td><strong>{total_general:,}</strong></td>
+        </tr>
+        </tbody>
+        </table>
+        """, unsafe_allow_html=True)
+        
+        # Mostrar estadísticas rápidas
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Viajes", len(planificaciones_fecha))
+        with col2:
+            st.metric("Total Pollos", f"{total_general:,}")
+        with col3:
+            conductores_unicos = len(set(p['conductor'] for p in planificaciones_fecha))
+            st.metric("Conductores", conductores_unicos)
+        with col4:
+            plantas = len(set(p['planta_incubacion'] for p in planificaciones_fecha))
+            st.metric("Plantas", plantas)
+        
+        # Sección de descarga
+        st.markdown("---")
+        st.markdown("""
+        <div class="download-section">
+            <h4>📥 Descargar Programación</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col_dl1, col_dl2 = st.columns(2)
+        
+        with col_dl1:
+            # Generar HTML para descarga
+            html_content = generar_html_programacion(planificaciones_fecha, fecha_str)
+            
+            st.download_button(
+                label="💾 Descargar HTML Profesional",
+                data=html_content,
+                file_name=f"programacion_despachos_{fecha_str}.html",
+                mime="text/html",
+                help="Descarga un reporte HTML profesional listo para imprimir"
+            )
+        
+        with col_dl2:
+            # También ofrecer descarga en CSV
+            datos_csv = []
+            for plan in planificaciones_fecha:
+                vehiculo_placa = plan['vehiculo'].split(' - ')[0] if ' - ' in plan['vehiculo'] else plan['vehiculo']
+                datos_csv.append({
+                    'N_Viaje': plan.get('numero_despacho', 'N/A'),
+                    'Conductor': plan['conductor'],
+                    'Placa': vehiculo_placa,
+                    'Ruta': plan.get('ruta', 'N/A'),
+                    'Zona': plan.get('zona', 'N/A'),
+                    'Cliente': plan['cliente'],
+                    'Granja': plan.get('destino_granja', 'N/A'),
+                    'Producto': plan['producto'],
+                    'Cantidad': plan['cantidad']
+                })
+            
+            df_csv = pd.DataFrame(datos_csv)
+            csv = df_csv.to_csv(index=False, encoding='utf-8')
+            
+            st.download_button(
+                label="📊 Descargar CSV",
+                data=csv,
+                file_name=f"programacion_despachos_{fecha_str}.csv",
+                mime="text/csv",
+                help="Descarga los datos en formato CSV para análisis"
+            )
 
 # =============================================
 # SISTEMA DE LOGIN MEJORADO
@@ -1244,68 +1755,66 @@ def gestion_vehiculos():
             st.info("No hay vehículos registrados")
 
 # =============================================
-# MÓDULO MEJORADO DE PLANIFICACIÓN
+# SISTEMA DE PROGRAMACIÓN DE DESPACHOS (ACTUALIZADO)
 # =============================================
 
 def planificacion_semanal():
-    """Planificación semanal mejorada"""
+    """Planificación semanal mejorada - VERSIÓN SIMPLIFICADA"""
     if not tiene_permiso(['admin', 'supervisor']):
         st.error("⛔ No tienes permisos para acceder a esta sección")
         return
     
-    st.header("📅 Planificación de Desplazamiento Laboral")
+    st.header("📅 Programación de Despachos")
     
     # Tabs para diferentes funcionalidades
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2 = st.tabs([
         "➕ Nueva Planificación", 
-        "📋 Planificación Existente", 
-        "📊 Programación Semanal"
+        "📋 Programación Diaria"
     ])
     
     with tab1:
-        st.subheader("➕ Nueva Planificación de Desplazamiento")
+        st.subheader("➕ Nueva Planificación de Despacho")
         
-        with st.form("nueva_planificacion_completa", clear_on_submit=True):
+        with st.form("nueva_planificacion", clear_on_submit=True):
             col1, col2 = st.columns(2)
             
             with col1:
                 st.markdown("**📋 Información Básica**")
-                lote = st.text_input("Número de Lote", placeholder="Ej: L2024-001")
-                producto = st.selectbox("Producto", ["POLITA", "POLITO", "SASSO", "AZUR", "CHICKENMIX", "OTRO"])
+                lote = st.text_input("Número de Lote*", placeholder="Ej: L2024-001")
+                producto = st.selectbox("Producto*", ["POLITA", "POLITO", "SASSO", "AZUR", "CHICKENMIX", "OTRO"])
                 if producto == "OTRO":
                     producto = st.text_input("Especificar producto")
                 
-                cliente = st.selectbox("Cliente", [c['nombre'] for c in st.session_state.clientes])
-                cantidad = st.number_input("Cantidad de Pollos", min_value=1, value=1000, step=100)
-                peso_estimado = st.number_input("Peso Estimado (kg)", min_value=1.0, value=50.0, step=0.5)
+                cliente = st.selectbox("Cliente*", [c['nombre'] for c in st.session_state.clientes])
+                cantidad = st.number_input("Cantidad de Pollos*", min_value=1, value=1000, step=100)
                 
-                # Información adicional para planillas
-                municipio = st.text_input("Municipio/Provincia", value="BUCARAMANGA, SANTANDER")
-                destino_granja = st.text_input("Destino Granja", placeholder="Ej: VILLA OFELIA EN CLAR PUESTICA CON CONEDEROS")
-                plan_vacunal = st.text_input("Descripción Plan Vacunal", value="INDUSTROM-BURSAPI EX-NEWCASTLE-BRONQ")
+                # Información de ubicación
+                municipio = st.text_input("Municipio/Provincia*", value="BUCARAMANGA, SANTANDER")
+                destino_granja = st.text_input("Granja/Destino*", placeholder="Ej: VILLA OFELIA")
+                zona = st.selectbox("Zona*", ZONAS)
             
             with col2:
-                st.markdown("**📅 Fechas y Horarios**")
-                fecha_nacimiento = st.date_input("Fecha de Nacimiento", min_value=datetime.now().date())
-                fecha_despacho = st.date_input("Fecha de Despacho", min_value=datetime.now().date())
+                st.markdown("**📅 Fechas y Transporte**")
+                fecha_nacimiento = st.date_input("Fecha de Nacimiento*", min_value=datetime.now().date())
+                fecha_despacho = st.date_input("Fecha de Despacho*", min_value=datetime.now().date())
                 
                 st.markdown("**🚚 Información de Transporte**")
-                conductor = st.selectbox("Conductor Asignado", [c['nombre'] for c in st.session_state.conductores])
-                vehiculo = st.selectbox("Vehículo", [f"{v['placa']} - {v['marca']}" for v in st.session_state.vehiculos])
-                ruta = st.selectbox("Ruta Asignada", RUTAS)
+                conductor = st.selectbox("Conductor Asignado*", [c['nombre'] for c in st.session_state.conductores])
+                vehiculo = st.selectbox("Vehículo*", [f"{v['placa']} - {v['marca']}" for v in st.session_state.vehiculos])
+                ruta = st.selectbox("Ruta Asignada*", RUTAS)
                 
-                planta_incubacion = st.selectbox("Planta de Incubación", ["1", "2"], 
+                planta_incubacion = st.selectbox("Planta de Incubación*", ["1", "2"], 
                                                format_func=lambda x: "San Gil" if x == "1" else "Girón")
                 
-                prioridad = st.selectbox("Prioridad", ["ALTA", "MEDIA", "BAJA"])
-                
                 # Información adicional
-                observaciones = st.text_area("Observaciones / Notas Especiales")
+                observaciones = st.text_area("Observaciones")
+            
+            st.markdown("**Campos obligatorios***")
             
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 if st.form_submit_button("💾 Guardar Planificación", type="primary"):
-                    if lote and cliente:
+                    if lote and cliente and municipio and destino_granja:
                         # Verificar si el lote ya existe
                         lote_existente = any(p.get('lote') == lote for p in st.session_state.planificacion)
                         if lote_existente:
@@ -1317,17 +1826,15 @@ def planificacion_semanal():
                                 'producto': producto,
                                 'cliente': cliente,
                                 'cantidad': cantidad,
-                                'peso_estimado': peso_estimado,
                                 'municipio': municipio,
                                 'destino_granja': destino_granja,
-                                'plan_vacunal': plan_vacunal,
+                                'zona': zona,
                                 'fecha_nacimiento': fecha_nacimiento.strftime("%Y-%m-%d"),
                                 'fecha_despacho': fecha_despacho.strftime("%Y-%m-%d"),
                                 'conductor': conductor,
                                 'vehiculo': vehiculo,
                                 'ruta': ruta,
                                 'planta_incubacion': planta_incubacion,
-                                'prioridad': prioridad,
                                 'observaciones': observaciones,
                                 'estado': 'PLANIFICADO',
                                 'fecha_creacion': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -1337,115 +1844,64 @@ def planificacion_semanal():
                             st.success("✅ Planificación guardada exitosamente!")
                             st.rerun()
                     else:
-                        st.warning("⚠️ Complete los campos obligatorios (Lote y Cliente)")
+                        st.warning("⚠️ Complete todos los campos obligatorios")
             
             with col_btn2:
                 if st.form_submit_button("🔄 Limpiar Formulario"):
                     st.rerun()
     
     with tab2:
-        st.subheader("📋 Planificación Existente")
+        st.subheader("📋 Programación Diaria de Despachos")
         
         if not st.session_state.planificacion:
             st.info("No hay planificaciones registradas")
         else:
-            # Filtros
-            col_filtro1, col_filtro2, col_filtro3 = st.columns(3)
+            # Filtros simplificados
+            st.markdown("### 🔍 Filtros")
+            col_filtro1, col_filtro2 = st.columns(2)
+            
             with col_filtro1:
-                filtro_estado = st.selectbox("Filtrar por Estado", ["TODOS", "PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO", "CANCELADO"])
+                # Filtro por fecha específica
+                filtro_fecha = st.date_input("Filtrar por fecha:", value=datetime.now().date())
+                fecha_filtro_str = filtro_fecha.strftime("%Y-%m-%d")
+            
             with col_filtro2:
-                filtro_prioridad = st.selectbox("Filtrar por Prioridad", ["TODAS", "ALTA", "MEDIA", "BAJA"])
-            with col_filtro3:
-                filtro_cliente = st.selectbox("Filtrar por Cliente", ["TODOS"] + list(set(p['cliente'] for p in st.session_state.planificacion)))
+                filtro_estado = st.selectbox("Filtrar por Estado", ["TODOS", "PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO"])
             
             # Aplicar filtros
             planificaciones_filtradas = st.session_state.planificacion.copy()
             
+            if fecha_filtro_str:
+                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['fecha_despacho'] == fecha_filtro_str]
+            
             if filtro_estado != "TODOS":
                 planificaciones_filtradas = [p for p in planificaciones_filtradas if p['estado'] == filtro_estado]
             
-            if filtro_prioridad != "TODAS":
-                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['prioridad'] == filtro_prioridad]
-            
-            if filtro_cliente != "TODOS":
-                planificaciones_filtradas = [p for p in planificaciones_filtradas if p['cliente'] == filtro_cliente]
-            
-            # Mostrar en tabla
-            datos_tabla = []
-            for plan in planificaciones_filtradas:
-                # Determinar color del estado
-                color_estado = {
-                    'PLANIFICADO': '🟡',
-                    'PROGRAMADO': '🔵', 
-                    'EN CURSO': '🟠',
-                    'COMPLETADO': '🟢',
-                    'CANCELADO': '🔴'
-                }.get(plan['estado'], '⚪')
-                
-                datos_tabla.append({
-                    'ID': plan['id'],
-                    'Lote': plan['lote'],
-                    'Cliente': plan['cliente'],
-                    'Producto': plan['producto'],
-                    'Cantidad': f"{plan['cantidad']:,}",
-                    'Fecha Despacho': plan['fecha_despacho'],
-                    'Conductor': plan['conductor'],
-                    'Vehículo': plan['vehiculo'],
-                    'Ruta': plan.get('ruta', 'N/A'),
-                    'Prioridad': plan['prioridad'],
-                    'Estado': f"{color_estado} {plan['estado']}"
-                })
-            
-            df_planificacion = pd.DataFrame(datos_tabla)
-            st.dataframe(df_planificacion, use_container_width=True)
-            
-            # Estadísticas
-            st.subheader("📊 Estadísticas de Planificación")
-            col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
-            
-            with col_stat1:
-                total = len(planificaciones_filtradas)
-                st.metric("Total Planificaciones", total)
-            
-            with col_stat2:
-                completados = len([p for p in planificaciones_filtradas if p['estado'] == 'COMPLETADO'])
-                st.metric("Completados", completados)
-            
-            with col_stat3:
-                pendientes = len([p for p in planificaciones_filtradas if p['estado'] in ['PLANIFICADO', 'PROGRAMADO']])
-                st.metric("Pendientes", pendientes)
-            
-            with col_stat4:
-                cantidad_total = sum([p['cantidad'] for p in planificaciones_filtradas])
-                st.metric("Total Pollos", f"{cantidad_total:,}")
-            
-            # Opciones de gestión
-            st.markdown("---")
-            st.subheader("🛠️ Gestión de Planificaciones")
-            
+            # Mostrar programación
             if planificaciones_filtradas:
-                col_gest1, col_gest2, col_gest3 = st.columns(3)
+                mostrar_programacion_diaria(planificaciones_filtradas)
+                
+                # Opciones de gestión
+                st.markdown("---")
+                st.subheader("🛠️ Gestión de Planificaciones")
+                
+                col_gest1, col_gest2 = st.columns(2)
                 
                 with col_gest1:
-                    planificacion_editar = st.selectbox(
-                        "Seleccionar planificación para editar:",
+                    planificacion_seleccionada = st.selectbox(
+                        "Seleccionar planificación:",
                         [f"{p['id']} - {p['lote']} - {p['cliente']}" for p in planificaciones_filtradas],
-                        key="editar_planificacion"
+                        key="seleccion_planificacion"
                     )
                     
-                    if st.button("✏️ Editar Planificación Seleccionada"):
-                        st.session_state.editando_planificacion = planificacion_editar.split(" - ")[0]
-                        st.info("🔧 Funcionalidad de edición en desarrollo")
-                
-                with col_gest2:
                     nuevo_estado = st.selectbox(
                         "Cambiar estado:",
-                        ["PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO", "CANCELADO"],
+                        ["PLANIFICADO", "PROGRAMADO", "EN CURSO", "COMPLETADO"],
                         key="cambiar_estado"
                     )
                     
                     if st.button("🔄 Actualizar Estado"):
-                        id_cambiar = planificacion_editar.split(" - ")[0]
+                        id_cambiar = planificacion_seleccionada.split(" - ")[0]
                         for plan in st.session_state.planificacion:
                             if plan['id'] == id_cambiar:
                                 plan['estado'] = nuevo_estado
@@ -1453,73 +1909,14 @@ def planificacion_semanal():
                                 st.rerun()
                                 break
                 
-                with col_gest3:
-                    if st.button("🗑️ Eliminar Planificación", type="secondary"):
-                        id_eliminar = planificacion_editar.split(" - ")[0]
+                with col_gest2:
+                    if st.button("🗑️ Eliminar Planificación Seleccionada", type="secondary"):
+                        id_eliminar = planificacion_seleccionada.split(" - ")[0]
                         st.session_state.planificacion = [p for p in st.session_state.planificacion if p['id'] != id_eliminar]
                         st.success("✅ Planificación eliminada!")
                         st.rerun()
-    
-    with tab3:
-        st.subheader("📊 Programación Semanal")
-        
-        # Selector de semana
-        fecha_inicio = st.date_input("Seleccionar semana empezando:", datetime.now().date())
-        
-        # Generar días de la semana
-        dias_semana = []
-        for i in range(7):
-            fecha = fecha_inicio + timedelta(days=i)
-            dias_semana.append(fecha)
-        
-        # Mostrar programación semanal
-        st.markdown("### 🗓️ Programación de la Semana")
-        
-        # Crear DataFrame para la semana
-        datos_semana = []
-        for fecha in dias_semana:
-            planificaciones_dia = [
-                p for p in st.session_state.planificacion 
-                if p['fecha_despacho'] == fecha.strftime("%Y-%m-%d")
-            ]
-            
-            for plan in planificaciones_dia:
-                datos_semana.append({
-                    'Fecha': fecha.strftime("%d/%m/%Y"),
-                    'Día': fecha.strftime("%A"),
-                    'Lote': plan['lote'],
-                    'Cliente': plan['cliente'],
-                    'Producto': plan['producto'],
-                    'Cantidad': plan['cantidad'],
-                    'Conductor': plan['conductor'],
-                    'Vehículo': plan['vehiculo'],
-                    'Ruta': plan.get('ruta', 'N/A'),
-                    'Prioridad': plan['prioridad'],
-                    'Estado': plan['estado']
-                })
-        
-        if datos_semana:
-            df_semana = pd.DataFrame(datos_semana)
-            st.dataframe(df_semana, use_container_width=True)
-            
-            # Resumen por día
-            st.markdown("### 📈 Resumen por Día")
-            resumen_dias = df_semana.groupby(['Fecha', 'Día']).agg({
-                'Lote': 'count',
-                'Cantidad': 'sum'
-            }).reset_index()
-            resumen_dias.columns = ['Fecha', 'Día', 'N° Despachos', 'Total Pollos']
-            
-            col_res1, col_res2 = st.columns(2)
-            with col_res1:
-                st.dataframe(resumen_dias, use_container_width=True)
-            
-            with col_res2:
-                # Gráfico simple de barras
-                if not resumen_dias.empty:
-                    st.bar_chart(resumen_dias.set_index('Día')['N° Despachos'])
-        else:
-            st.info("No hay planificaciones para esta semana")
+            else:
+                st.info("No hay planificaciones que coincidan con los filtros aplicados")
 
 # =============================================
 # SISTEMA MEJORADO DE DESPACHOS Y PLANILLAS
@@ -1791,7 +2188,7 @@ def main():
                 "👥 Gestión Clientes", 
                 "👤 Gestión Conductores", 
                 "🚗 Gestión Vehículos",
-                "📅 Planificación", 
+                "📅 Programación", 
                 "🚚 Despacho"
             ])
         
@@ -1818,7 +2215,7 @@ def main():
         gestion_vehiculos()
     elif opcion == "🔐 Gestión Usuarios":
         gestion_usuarios()
-    elif opcion == "📅 Planificación":
+    elif opcion == "📅 Programación":
         planificacion_semanal()
     elif opcion == "🚚 Despacho":
         generar_despacho()
