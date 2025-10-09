@@ -200,11 +200,12 @@ if 'conductores' not in st.session_state:
         {'codigo': 'D003', 'nombre': 'SÁNCHEZ BARRERA WILMER ALEXANDER', 'identificacion': '456789123'},
     ]
 
+# VEHÍCULOS - SOLO PLACA Y MARCA
 if 'vehiculos' not in st.session_state:
     st.session_state.vehiculos = [
-        {'placa': 'WOM366', 'marca': 'CHEVROLET', 'modelo': 'NKR', 'capacidad': 5000, 'activo': True},
-        {'placa': 'WFD670', 'marca': 'TOYOTA', 'modelo': 'DYNA', 'capacidad': 6000, 'activo': True},
-        {'placa': 'GQU440', 'marca': 'NISSAN', 'modelo': 'ATLAS', 'capacidad': 4500, 'activo': True},
+        {'placa': 'WOM366', 'marca': 'CHEVROLET'},
+        {'placa': 'WFD670', 'marca': 'TOYOTA'},
+        {'placa': 'GQU440', 'marca': 'NISSAN'},
     ]
 
 if 'planificacion' not in st.session_state:
@@ -1124,6 +1125,125 @@ def gestion_conductores_vehiculos():
             st.info("No hay conductores registrados")
 
 # =============================================
+# GESTIÓN DE VEHÍCULOS (NUEVA SECCIÓN)
+# =============================================
+
+def gestion_vehiculos():
+    """Gestión de vehículos - SOLO PLACA Y MARCA"""
+    if not tiene_permiso(['admin', 'supervisor']):
+        st.error("⛔ No tienes permisos para acceder a esta sección")
+        return
+    
+    st.header("🚗 Gestión de Vehículos")
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("➕ Agregar Vehículo")
+        with st.form("nuevo_vehiculo"):
+            placa = st.text_input("Placa del Vehículo*", placeholder="Ej: ABC123")
+            marca = st.text_input("Marca del Vehículo*", placeholder="Ej: TOYOTA")
+            
+            if st.form_submit_button("💾 Guardar Vehículo"):
+                if placa and marca:
+                    # Verificar si la placa ya existe
+                    if any(v['placa'] == placa for v in st.session_state.vehiculos):
+                        st.error("❌ La placa ya existe")
+                    else:
+                        nuevo_vehiculo = {
+                            'placa': placa,
+                            'marca': marca
+                        }
+                        st.session_state.vehiculos.append(nuevo_vehiculo)
+                        st.success("✅ Vehículo guardado exitosamente!")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ Complete todos los campos")
+        
+        st.markdown("---")
+        st.subheader("📤 Importar desde CSV")
+        
+        archivo_csv = st.file_uploader("Subir archivo CSV con vehículos", type=['csv'], key="vehiculos_csv")
+        
+        if archivo_csv is not None:
+            try:
+                df = pd.read_csv(archivo_csv)
+                st.write("Vista previa del archivo:")
+                st.dataframe(df.head())
+                
+                # Verificar columnas requeridas
+                columnas_requeridas = ['placa', 'marca']
+                if all(col in df.columns for col in columnas_requeridas):
+                    if st.button("📥 Importar Vehículos"):
+                        nuevos = 0
+                        for _, fila in df.iterrows():
+                            if not any(v['placa'] == fila['placa'] for v in st.session_state.vehiculos):
+                                st.session_state.vehiculos.append({
+                                    'placa': fila['placa'],
+                                    'marca': fila['marca']
+                                })
+                                nuevos += 1
+                        st.success(f"✅ Importados {nuevos} nuevos vehículos!")
+                        st.rerun()
+                else:
+                    st.error("❌ El archivo debe contener las columnas: placa, marca")
+            except Exception as e:
+                st.error(f"❌ Error al leer el archivo: {e}")
+    
+    with col2:
+        st.subheader("📋 Lista de Vehículos")
+        
+        if st.session_state.vehiculos:
+            # Crear DataFrame para mostrar
+            datos_tabla = []
+            for vehiculo in st.session_state.vehiculos:
+                datos_tabla.append({
+                    'Placa': vehiculo['placa'],
+                    'Marca': vehiculo['marca']
+                })
+            
+            df_vehiculos = pd.DataFrame(datos_tabla)
+            st.dataframe(df_vehiculos, use_container_width=True)
+            
+            # Botón para exportar a CSV
+            csv = df_vehiculos.to_csv(index=False)
+            
+            st.download_button(
+                label="📥 Descargar Lista de Vehículos (CSV)",
+                data=csv,
+                file_name=f"vehiculos_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+            
+            # Opción para eliminar vehículo
+            st.markdown("---")
+            st.subheader("🗑️ Eliminar Vehículo")
+            
+            if st.session_state.vehiculos:
+                vehiculo_a_eliminar = st.selectbox(
+                    "Seleccionar vehículo a eliminar:",
+                    [f"{v['placa']} - {v['marca']}" for v in st.session_state.vehiculos],
+                    key="eliminar_vehiculo"
+                )
+                
+                col_btn1, col_btn2 = st.columns(2)
+                
+                with col_btn1:
+                    if st.button("🗑️ Eliminar Vehículo Seleccionado", type="primary"):
+                        placa_eliminar = vehiculo_a_eliminar.split(" - ")[0]
+                        st.session_state.vehiculos = [v for v in st.session_state.vehiculos if v['placa'] != placa_eliminar]
+                        st.success("✅ Vehículo eliminado!")
+                        st.rerun()
+                
+                with col_btn2:
+                    if st.button("🗑️ Eliminar TODOS los vehículos"):
+                        st.session_state.vehiculos = []
+                        st.success("✅ Todos los vehículos eliminados!")
+                        st.rerun()
+        else:
+            st.info("No hay vehículos registrados")
+
+# =============================================
 # MÓDULO MEJORADO DE PLANIFICACIÓN
 # =============================================
 
@@ -1171,7 +1291,7 @@ def planificacion_semanal():
                 
                 st.markdown("**🚚 Información de Transporte**")
                 conductor = st.selectbox("Conductor Asignado", [c['nombre'] for c in st.session_state.conductores])
-                vehiculo = st.selectbox("Vehículo", [f"{v['placa']} - {v['marca']} {v['modelo']}" for v in st.session_state.vehiculos])
+                vehiculo = st.selectbox("Vehículo", [f"{v['placa']} - {v['marca']}" for v in st.session_state.vehiculos])
                 ruta = st.selectbox("Ruta Asignada", RUTAS)
                 
                 planta_incubacion = st.selectbox("Planta de Incubación", ["1", "2"], 
@@ -1270,6 +1390,7 @@ def planificacion_semanal():
                     'Cantidad': f"{plan['cantidad']:,}",
                     'Fecha Despacho': plan['fecha_despacho'],
                     'Conductor': plan['conductor'],
+                    'Vehículo': plan['vehiculo'],
                     'Ruta': plan.get('ruta', 'N/A'),
                     'Prioridad': plan['prioridad'],
                     'Estado': f"{color_estado} {plan['estado']}"
@@ -1371,6 +1492,7 @@ def planificacion_semanal():
                     'Producto': plan['producto'],
                     'Cantidad': plan['cantidad'],
                     'Conductor': plan['conductor'],
+                    'Vehículo': plan['vehiculo'],
                     'Ruta': plan.get('ruta', 'N/A'),
                     'Prioridad': plan['prioridad'],
                     'Estado': plan['estado']
@@ -1618,7 +1740,7 @@ def mostrar_dashboard():
     with col2:
         st.metric("Conductores", len(st.session_state.conductores))
     with col3:
-        st.metric("Vehículos", len([v for v in st.session_state.vehiculos if v.get('activo', True)]))
+        st.metric("Vehículos", len(st.session_state.vehiculos))
     with col4:
         pendientes = len([p for p in st.session_state.planificacion if p.get('estado') in ['PLANIFICADO', 'PROGRAMADO']])
         st.metric("Planificaciones Pendientes", pendientes)
@@ -1668,6 +1790,7 @@ def main():
             opciones_menu.extend([
                 "👥 Gestión Clientes", 
                 "👤 Gestión Conductores", 
+                "🚗 Gestión Vehículos",
                 "📅 Planificación", 
                 "🚚 Despacho"
             ])
@@ -1691,6 +1814,8 @@ def main():
         gestion_clientes()
     elif opcion == "👤 Gestión Conductores":
         gestion_conductores_vehiculos()
+    elif opcion == "🚗 Gestión Vehículos":
+        gestion_vehiculos()
     elif opcion == "🔐 Gestión Usuarios":
         gestion_usuarios()
     elif opcion == "📅 Planificación":
