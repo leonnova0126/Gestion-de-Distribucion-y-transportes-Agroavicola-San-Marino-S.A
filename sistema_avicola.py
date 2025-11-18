@@ -5,8 +5,6 @@ import io
 import hashlib
 import hmac
 import time
-import plotly.express as px
-import plotly.graph_objects as go
 
 # Configurar la página
 st.set_page_config(
@@ -518,22 +516,13 @@ ZONAS = [
     "Ocaña", "Málaga", "Centro", "Gerencia", "Antioquia", "Venezuela"
 ]
 
-# RUTAS ACTUALIZADAS SEGÚN ESPECIFICACIÓN CON HORAS
-RUTAS_CON_HORAS = {
-    "Mogotes Huevo (Costa Rica/S German + Primavera)": 7,
-    "Dos Hilachas San Gil": 8,
-    "El Dorado San Gil": 6,
-    "Juan Curi San Gil": 8,
-    "La Laguna San Gil": 8,
-    "Villa Johana/La Maria San Gil": 6,
-    "Miralindo San Gil": 8,
-    "Rey David San Gil": 8,
-    "San Gil-Huevo Giron": 8,
-    "San Roque San Gil": 6,
-    "Flandes-Giron H Pollita": 25
-}
-
-RUTAS = list(RUTAS_CON_HORAS.keys())
+# RUTAS ACTUALIZADAS SEGÚN ESPECIFICACIÓN
+RUTAS = [
+    "CENTRO", "CUCUTA", "MADROÑO", "MALAGA", "REMESAS GIRÓN", 
+    "BODEGA GIRÓN", "REMESAS SAN GIL", "BODEGA SAN GIL", 
+    "SUR PRODUCTOR", "ANTIOQUIA", "BARRANCABERMEJA", "OCAÑA", 
+    "SUR DE BOLIVAR", "SUR LARGA", "PUERTO BERRIO"
+]
 
 PLANTAS_NACIMIENTO = [
     "Distraves", "Esperanza 1", "San Gil", "Girón", "Otras"
@@ -542,199 +531,6 @@ PLANTAS_NACIMIENTO = [
 PLANES_VACUNALES = [
     "STANDARD", "PREMIUM", "BASIC", "PERSONALIZADO"
 ]
-
-# =============================================
-# FUNCIONES PARA CÁLCULO Y VISUALIZACIÓN DE HORAS
-# =============================================
-
-def calcular_horas_programadas_semana():
-    """Calcula las horas programadas por conductor para la semana actual"""
-    
-    # Obtener fecha actual y rango de la semana
-    hoy = datetime.now().date()
-    inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes
-    fin_semana = inicio_semana + timedelta(days=6)       # Domingo
-    
-    # Convertir a strings para comparación
-    inicio_semana_str = inicio_semana.strftime("%Y-%m-%d")
-    fin_semana_str = fin_semana.strftime("%Y-%m-%d")
-    
-    # Filtrar planificaciones de la semana actual
-    planificaciones_semana = [
-        p for p in st.session_state.planificacion 
-        if inicio_semana_str <= p['fecha_despacho'] <= fin_semana_str
-        and p.get('estado') in ['PLANIFICADO', 'PROGRAMADO']
-    ]
-    
-    if not planificaciones_semana:
-        return None
-    
-    # Calcular horas por conductor
-    horas_conductor = {}
-    
-    for plan in planificaciones_semana:
-        conductor = plan['conductor']
-        
-        # Calcular horas estimadas basadas en la ruta
-        horas_estimadas = estimar_horas_por_ruta(plan.get('ruta', 'El Dorado San Gil'))
-        
-        if conductor not in horas_conductor:
-            horas_conductor[conductor] = {
-                'total_horas': 0,
-                'viajes': 0,
-                'detalle_viajes': []
-            }
-        
-        horas_conductor[conductor]['total_horas'] += horas_estimadas
-        horas_conductor[conductor]['viajes'] += 1
-        horas_conductor[conductor]['detalle_viajes'].append({
-            'fecha': plan['fecha_despacho'],
-            'ruta': plan.get('ruta', 'N/A'),
-            'cliente': plan['cliente'],
-            'horas': horas_estimadas
-        })
-    
-    return horas_conductor
-
-def estimar_horas_por_ruta(ruta):
-    """Estima las horas de viaje basadas en la ruta asignada"""
-    return RUTAS_CON_HORAS.get(ruta, 6)  # 6 horas por defecto
-
-def crear_grafica_horas_conductor(horas_por_conductor):
-    """Crea una gráfica de barras de horas programadas por conductor"""
-    
-    # Preparar datos para la gráfica
-    conductores = []
-    horas_totales = []
-    cantidad_viajes = []
-    
-    for conductor, datos in horas_por_conductor.items():
-        conductores.append(conductor)
-        horas_totales.append(datos['total_horas'])
-        cantidad_viajes.append(datos['viajes'])
-    
-    # Crear DataFrame para Plotly
-    df = pd.DataFrame({
-        'Conductor': conductores,
-        'Horas Programadas': horas_totales,
-        'Cantidad de Viajes': cantidad_viajes
-    })
-    
-    # Ordenar por horas (descendente)
-    df = df.sort_values('Horas Programadas', ascending=False)
-    
-    # Crear gráfica de barras
-    fig = px.bar(
-        df,
-        x='Conductor',
-        y='Horas Programadas',
-        title='Horas Programadas por Conductor - Semana Actual',
-        color='Horas Programadas',
-        color_continuous_scale='reds',
-        text='Horas Programadas',
-        hover_data={'Cantidad de Viajes': True}
-    )
-    
-    # Personalizar la gráfica
-    fig.update_traces(
-        texttemplate='%{text:.0f}h',
-        textposition='outside',
-        marker_line_color='#d32f2f',
-        marker_line_width=1.5
-    )
-    
-    fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#333'),
-        title_font_size=20,
-        title_x=0.5,
-        xaxis_title="Conductor",
-        yaxis_title="Horas Programadas",
-        showlegend=False,
-        height=500
-    )
-    
-    # Agregar línea de promedio
-    promedio_horas = df['Horas Programadas'].mean()
-    fig.add_hline(
-        y=promedio_horas,
-        line_dash="dash",
-        line_color="orange",
-        annotation_text=f"Promedio: {promedio_horas:.1f}h",
-        annotation_position="top right"
-    )
-    
-    return fig
-
-def mostrar_tabla_horas_detalle(horas_por_conductor):
-    """Muestra una tabla detallada de las horas programadas"""
-    
-    datos_tabla = []
-    for conductor, datos in horas_por_conductor.items():
-        datos_tabla.append({
-            'Conductor': conductor,
-            'Total Horas': f"{datos['total_horas']:.1f}h",
-            'Cantidad de Viajes': datos['viajes'],
-            'Promedio por Viaje': f"{datos['total_horas']/datos['viajes']:.1f}h"
-        })
-    
-    # Ordenar por total de horas (descendente)
-    datos_tabla_ordenados = sorted(datos_tabla, key=lambda x: float(x['Total Horas'].replace('h', '')), reverse=True)
-    
-    # Mostrar tabla
-    df_detalle = pd.DataFrame(datos_tabla_ordenados)
-    st.dataframe(df_detalle, use_container_width=True)
-    
-    # Opción para ver detalles expandidos
-    with st.expander("📋 Ver Detalle de Viajes por Conductor"):
-        for conductor, datos in horas_por_conductor.items():
-            st.markdown(f"**{conductor}** - Total: {datos['total_horas']:.1f}h en {datos['viajes']} viajes")
-            
-            # Crear tabla de viajes individuales
-            viajes_data = []
-            for viaje in datos['detalle_viajes']:
-                viajes_data.append({
-                    'Fecha': viaje['fecha'],
-                    'Ruta': viaje['ruta'],
-                    'Cliente': viaje['cliente'],
-                    'Horas Estimadas': f"{viaje['horas']:.1f}h"
-                })
-            
-            if viajes_data:
-                df_viajes = pd.DataFrame(viajes_data)
-                st.dataframe(df_viajes, use_container_width=True)
-            st.markdown("---")
-
-def mostrar_metricas_horas(horas_por_conductor):
-    """Muestra métricas resumen de la distribución de horas"""
-    
-    total_horas = sum(datos['total_horas'] for datos in horas_por_conductor.values())
-    total_viajes = sum(datos['viajes'] for datos in horas_por_conductor.values())
-    promedio_horas = total_horas / len(horas_por_conductor) if horas_por_conductor else 0
-    
-    # Encontrar conductor con más y menos horas
-    if horas_por_conductor:
-        conductor_max = max(horas_por_conductor.items(), key=lambda x: x[1]['total_horas'])
-        conductor_min = min(horas_por_conductor.items(), key=lambda x: x[1]['total_horas'])
-    else:
-        conductor_max = conductor_min = (None, {'total_horas': 0})
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("🕐 Total Horas Programadas", f"{total_horas:.1f}h")
-    
-    with col2:
-        st.metric("📦 Total Viajes Programados", total_viajes)
-    
-    with col3:
-        st.metric("👑 Conductor Más Horas", 
-                 f"{conductor_max[0][:15]}..." if conductor_max[0] and len(conductor_max[0]) > 15 else conductor_max[0],
-                 f"{conductor_max[1]['total_horas']:.1f}h")
-    
-    with col4:
-        st.metric("📊 Promedio por Conductor", f"{promedio_horas:.1f}h")
 
 # =============================================
 # SISTEMA DE GENERACIÓN DE NÚMEROS DE DESPACHO
@@ -2570,11 +2366,11 @@ def seguimiento_despachos():
                 st.success("✅ Estado actualizado!")
 
 # =============================================
-# DASHBOARD PRINCIPAL PREMIUM (ACTUALIZADO)
+# DASHBOARD PRINCIPAL PREMIUM
 # =============================================
 
 def mostrar_dashboard():
-    """Dashboard principal premium con gráfica de horas programadas"""
+    """Dashboard principal premium"""
     st.markdown('<div class="section-title">📊 Dashboard</div>', unsafe_allow_html=True)
     
     # Métricas principales
@@ -2588,30 +2384,6 @@ def mostrar_dashboard():
     with col4:
         pendientes = len([p for p in st.session_state.planificacion if p.get('estado') in ['PLANIFICADO', 'PROGRAMADO']])
         st.metric("📅 Planificaciones Pendientes", pendientes)
-    
-    # SECCIÓN NUEVA: GRÁFICA DE HORAS PROGRAMADAS POR CONDUCTOR
-    st.markdown("---")
-    st.markdown('<div class="section-title">📈 Horas Programadas por Conductor (Semana Actual)</div>', unsafe_allow_html=True)
-    
-    # Calcular horas programadas por conductor para la semana actual
-    horas_por_conductor = calcular_horas_programadas_semana()
-    
-    if horas_por_conductor:
-        # Crear gráfica
-        fig = crear_grafica_horas_conductor(horas_por_conductor)
-        
-        # Mostrar gráfica
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Mostrar tabla de datos detallada
-        st.markdown("### 📋 Detalle de Horas Programadas")
-        mostrar_tabla_horas_detalle(horas_por_conductor)
-        
-        # Métricas resumen
-        st.markdown("### 📊 Métricas de Distribución de Horas")
-        mostrar_metricas_horas(horas_por_conductor)
-    else:
-        st.info("ℹ️ No hay horas programadas para la semana actual. Las horas se calculan automáticamente basándose en las planificaciones de despacho.")
     
     # Información adicional solo para admin/supervisor
     if tiene_permiso(['admin', 'supervisor']):
